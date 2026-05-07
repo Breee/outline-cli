@@ -107,11 +107,14 @@ func requestDeviceCode(ctx context.Context, endpoint, clientID string, scopes []
 }
 
 func pollToken(ctx context.Context, tokenEndpoint, clientID, deviceCode string, interval time.Duration) (*oauth2.Token, error) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
 	for {
 		select {
 		case <-ctx.Done():
 			return nil, ctx.Err()
-		case <-time.After(interval):
+		case <-ticker.C:
 			values := url.Values{}
 			values.Set("grant_type", "urn:ietf:params:oauth:grant-type:device_code")
 			values.Set("client_id", clientID)
@@ -145,6 +148,7 @@ func pollToken(ctx context.Context, tokenEndpoint, clientID, deviceCode string, 
 				continue
 			case "slow_down":
 				interval += 2 * time.Second
+				ticker.Reset(interval)
 				continue
 			case "":
 				if payload.AccessToken == "" {
