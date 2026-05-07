@@ -1,0 +1,155 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  schedule:
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: 'Version bump level'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      prerelease:
+        description: 'Mark as pre-release'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.25.0"
+
+      - run: make test
+
+  e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.25.0"
+
+      - run: make e2e
+
+  release:
+    name: Create Release
+    needs: [test, e2e]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.25.0"
+
+      - name: Check for relevant changes since last tag
+        id: changes
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: |
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [[ -n "$LATEST_TAG" ]]; then
+            CHANGED=$(git diff --name-only "$LATEST_TAG"..HEAD -- cmd internal main.go go.mod go.sum)
+            if [[ -z "$CHANGED" ]]; then
+              echo "No relevant changes since $LATEST_TAG — skipping release."
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: Determine version
+        id: version
+        if: steps.changes.outputs.skip != 'true'
+        run: |
+          if [[ "${{ github.event_name }}" == "schedule" || "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+            MAJOR=$(echo "$LATEST_TAG" | sed 's/^v//' | cut -d. -f1)
+            MINOR=$(echo "$LATEST_TAG" | sed 's/^v//' | cut -d. -f2)
+            PATCH=$(echo "$LATEST_TAG" | sed 's/^v//' | cut -d. -f3)
+
+            BUMP="${{ inputs.bump || 'patch' }}"
+            case "$BUMP" in
+              major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
+              minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
+              patch) PATCH=$((PATCH + 1)) ;;
+            esac
+
+            VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git tag "$VERSION"
+            git push origin "$VERSION"
+          else
+            VERSION="${GITHUB_REF#refs/tags/}"
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Build linux/amd64
+        if: steps.changes.outputs.skip != 'true'
+        run: |
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o outline
+          tar czf outline_linux_amd64.tar.gz outline LICENSE README.md
+
+      - name: Build linux/arm64
+        if: steps.changes.outputs.skip != 'true'
+        run: |
+          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -ldflags="-s -w" -o outline
+          tar czf outline_linux_arm64.tar.gz outline LICENSE README.md
+
+      - name: Build darwin/amd64
+        if: steps.changes.outputs.skip != 'true'
+        run: |
+          CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o outline
+          tar czf outline_darwin_amd64.tar.gz outline LICENSE README.md
+
+      - name: Build darwin/arm64
+        if: steps.changes.outputs.skip != 'true'
+        run: |
+          CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o outline
+          tar czf outline_darwin_arm64.tar.gz outline LICENSE README.md
+
+      - name: Create release with auto-generated notes
+        if: steps.changes.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PRERELEASE_FLAG=""
+          VERSION="${{ steps.version.outputs.version }}"
+          if [[ "$VERSION" == *-* ]]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+          if [[ "${{ inputs.prerelease }}" == "true" ]]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+
+          gh release create "$VERSION" \
+            --title "$VERSION" \
+            --generate-notes \
+            $PRERELEASE_FLAG \
+            outline_linux_amd64.tar.gz \
+            outline_linux_arm64.tar.gz \
+            outline_darwin_amd64.tar.gz \
+            outline_darwin_arm64.tar.gz

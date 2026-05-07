@@ -1,0 +1,38 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    "mergeConfidence:all-badges",
+    ":semanticCommits",
+    ":disableRateLimiting",
+    ":separateMajorReleases",
+    ":separatePatchReleases",
+    ":automergeRequireAllStatusChecks",
+    ":automergePr",
+    ":ignoreModulesAndTests"
+  ],
+  "configMigration": true,
+  "timezone": "Europe/Berlin",
+  "useBaseBranchConfig": "merge",
+  "platformAutomerge": true,
+  "rebaseWhen": "automerging",
+  "dependencyDashboard": true,
+  "major": { "labels": ["renovate::major", "type::renovate"], "automerge": false },
+  "minor": { "labels": ["renovate::minor", "type::renovate"], "automerge": true },
+  "patch": { "labels": ["renovate::patch", "type::renovate"], "automerge": true },
+  "pin": { "labels": ["renovate::pin", "type::renovate"], "automerge": true },
+  "digest": { "labels": ["renovate::digest", "type::renovate"], "automerge": true },
+  "packageRules": [
+    {
+      "matchManagers": ["gomod"],
+      "matchDepTypes": ["indirect"],
+      "enabled": true
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "automerge": true
+    }
+  ],
+  "postUpdateOptions": ["gomodTidy"]
+}

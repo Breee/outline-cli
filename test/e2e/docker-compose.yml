@@ -1,0 +1,19 @@
+services:
+  outline-mock:
+    image: golang:1.25-alpine
+    working_dir: /workspace
+    command: ["sh", "-c", "go run ./test/e2e/mock/main.go"]
+    volumes:
+      - ../../:/workspace
+
+  e2e:
+    image: golang:1.25-alpine
+    depends_on:
+      - outline-mock
+    working_dir: /workspace
+    environment:
+      OUTLINE_SERVER_URL: http://outline-mock:8080
+      OUTLINE_API_TOKEN: e2e-token
+    command: ["sh", "-c", "go test ./test/e2e -v"]
+    volumes:
+      - ../../:/workspace
