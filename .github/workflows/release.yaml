@@ -119,6 +119,12 @@ jobs:
           CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -ldflags="-s -w" -o outline
           tar czf outline_linux_arm64.tar.gz outline LICENSE README.md
 
+      - name: Build linux/armv7
+        if: steps.changes.outputs.skip != 'true'
+        run: |
+          CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=7 go build -ldflags="-s -w" -o outline
+          tar czf outline_linux_armv7.tar.gz outline LICENSE README.md
+
       - name: Build darwin/amd64
         if: steps.changes.outputs.skip != 'true'
         run: |
@@ -130,6 +136,27 @@ jobs:
         run: |
           CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o outline
           tar czf outline_darwin_arm64.tar.gz outline LICENSE README.md
+
+      - name: Build windows/amd64
+        if: steps.changes.outputs.skip != 'true'
+        run: |
+          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o outline.exe
+          zip -j outline_windows_amd64.zip outline.exe LICENSE README.md
+
+      - name: Build windows/arm64
+        if: steps.changes.outputs.skip != 'true'
+        run: |
+          CGO_ENABLED=0 GOOS=windows GOARCH=arm64 go build -ldflags="-s -w" -o outline.exe
+          zip -j outline_windows_arm64.zip outline.exe LICENSE README.md
+
+      - name: Generate completion scripts
+        if: steps.changes.outputs.skip != 'true'
+        run: |
+          mkdir -p completions
+          go run . completion bash > completions/outline.bash
+          go run . completion zsh > completions/outline.zsh
+          go run . completion fish > completions/outline.fish
+          tar czf outline_completions.tar.gz -C completions .
 
       - name: Create release with auto-generated notes
         if: steps.changes.outputs.skip != 'true'
@@ -151,5 +178,9 @@ jobs:
             $PRERELEASE_FLAG \
             outline_linux_amd64.tar.gz \
             outline_linux_arm64.tar.gz \
+            outline_linux_armv7.tar.gz \
             outline_darwin_amd64.tar.gz \
-            outline_darwin_arm64.tar.gz
+            outline_darwin_arm64.tar.gz \
+            outline_windows_amd64.zip \
+            outline_windows_arm64.zip \
+            outline_completions.tar.gz
