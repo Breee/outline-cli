@@ -904,6 +904,7 @@ Available keys:
   oidc_port
   api_token
   password
+  username
   oidc_access_token
 
 ```
@@ -1002,6 +1003,7 @@ server_url: # Outline server base URL
 auth_method: # Auth method: api_token, oidc, basic
 token_storage: # Secret storage backend: keyring, file
 oidc_port: # Local port for OIDC callback
+username: # Basic auth username
 ```
 
 ## Fields
@@ -1014,6 +1016,7 @@ oidc_port: # Local port for OIDC callback
 | `oidc_port` | no | `OUTLINE_OIDC_PORT` | Local port for OIDC callback |
 | `api_token` | yes | `OUTLINE_API_TOKEN` | API bearer token |
 | `password` | yes | `OUTLINE_PASSWORD` | Basic auth password |
+| `username` | no | `OUTLINE_USERNAME` | Basic auth username |
 | `oidc_access_token` | yes | `OUTLINE_OIDC_ACCESS_TOKEN` | OIDC access token (set by auth oidc-login) |
 
 ## File Permissions
@@ -1173,7 +1176,7 @@ All environment variables recognized by outline-cli.
 | `OUTLINE_OIDC_PORT` | `oidc_port` | Local port for OIDC callback |
 | `OUTLINE_API_TOKEN` | `api_token` | API bearer token |
 | `OUTLINE_PASSWORD` | `password` | Basic auth password |
-| `OUTLINE_USERNAME` | — | Basic auth username |
+| `OUTLINE_USERNAME` | `username` | Basic auth username |
 | `OUTLINE_OIDC_ACCESS_TOKEN` | `oidc_access_token` | OIDC access token (set by auth oidc-login) |
 
 ## Priority

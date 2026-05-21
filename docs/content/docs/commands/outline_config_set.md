@@ -20,6 +20,7 @@ Available keys:
   oidc_port
   api_token
   password
+  username
   oidc_access_token
 
 ```

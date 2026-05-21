@@ -16,6 +16,6 @@ var Registry = []Option{
 	{Key: "oidc_port", EnvVar: "OUTLINE_OIDC_PORT", Description: "Local port for OIDC callback"},
 	{Key: "api_token", EnvVar: "OUTLINE_API_TOKEN", Secret: true, Description: "API bearer token"},
 	{Key: "password", EnvVar: "OUTLINE_PASSWORD", Secret: true, Description: "Basic auth password"},
-	{Key: "", EnvVar: "OUTLINE_USERNAME", Description: "Basic auth username"},
+	{Key: "username", EnvVar: "OUTLINE_USERNAME", Description: "Basic auth username"},
 	{Key: "oidc_access_token", EnvVar: "OUTLINE_OIDC_ACCESS_TOKEN", Secret: true, Description: "OIDC access token (set by auth oidc-login)"},
 }

@@ -15,7 +15,7 @@ All environment variables recognized by outline-cli.
 | `OUTLINE_OIDC_PORT` | `oidc_port` | Local port for OIDC callback |
 | `OUTLINE_API_TOKEN` | `api_token` | API bearer token |
 | `OUTLINE_PASSWORD` | `password` | Basic auth password |
-| `OUTLINE_USERNAME` | — | Basic auth username |
+| `OUTLINE_USERNAME` | `username` | Basic auth username |
 | `OUTLINE_OIDC_ACCESS_TOKEN` | `oidc_access_token` | OIDC access token (set by auth oidc-login) |
 
 ## Priority

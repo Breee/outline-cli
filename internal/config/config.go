@@ -18,6 +18,7 @@ type File struct {
 	OIDCAccessToken string `yaml:"oidc_access_token,omitempty" mapstructure:"oidc_access_token"`
 	APIToken        string `yaml:"api_token,omitempty" mapstructure:"api_token"`
 	Password        string `yaml:"password,omitempty" mapstructure:"password"`
+	Username        string `yaml:"username,omitempty" mapstructure:"username"`
 	OIDCPort        int    `yaml:"oidc_port,omitempty" mapstructure:"oidc_port"`
 }
 
@@ -85,6 +86,8 @@ func (f *File) Get(key string) (string, error) {
 		return LoadAPIToken(*f), nil
 	case "password":
 		return LoadPassword(*f), nil
+	case "username":
+		return f.Username, nil
 	case "oidc_port":
 		if f.OIDCPort == 0 {
 			return "", nil
@@ -124,6 +127,8 @@ func (f *File) Set(key, value string) error {
 		f.APIToken = value
 	case "password":
 		f.Password = value
+	case "username":
+		f.Username = value
 	default:
 		return fmt.Errorf("unknown config key %q (valid: %v)", key, ValidKeys)
 	}
