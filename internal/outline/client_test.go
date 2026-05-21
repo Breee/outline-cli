@@ -56,7 +56,7 @@ func TestCreateDocument(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	doc, err := client.CreateDocument(context.Background(), "col-1", "hello", "# hello", true)
+	doc, err := client.CreateDocument(context.Background(), "col-1", "hello", "# hello", true, "")
 	if err != nil {
 		t.Fatal(err)
 	}

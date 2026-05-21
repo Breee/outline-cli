@@ -27,18 +27,27 @@ type DeviceAuthorization struct {
 	Interval                int    `json:"interval"`
 }
 
-func DeviceLogin(ctx context.Context, issuer, clientID string, scopes []string) (*oauth2.Token, DeviceAuthorization, error) {
+// DeviceSession holds the state needed to poll for a token after device login is initiated.
+type DeviceSession struct {
+	Device        DeviceAuthorization
+	tokenEndpoint string
+	clientID      string
+	interval      time.Duration
+}
+
+// StartDeviceLogin initiates the device authorization flow and returns the device code/URL.
+func StartDeviceLogin(ctx context.Context, issuer, clientID string, scopes []string) (*DeviceSession, error) {
 	doc, err := discover(ctx, issuer)
 	if err != nil {
-		return nil, DeviceAuthorization{}, err
+		return nil, err
 	}
 	if doc.TokenEndpoint == "" || doc.DeviceAuthorizationEndpoint == "" {
-		return nil, DeviceAuthorization{}, errors.New("issuer does not expose device authorization flow")
+		return nil, errors.New("issuer does not expose device authorization flow")
 	}
 
 	device, err := requestDeviceCode(ctx, doc.DeviceAuthorizationEndpoint, clientID, scopes)
 	if err != nil {
-		return nil, DeviceAuthorization{}, err
+		return nil, err
 	}
 
 	interval := time.Duration(device.Interval) * time.Second
@@ -46,11 +55,17 @@ func DeviceLogin(ctx context.Context, issuer, clientID string, scopes []string) 
 		interval = 5 * time.Second
 	}
 
-	token, err := pollToken(ctx, doc.TokenEndpoint, clientID, device.DeviceCode, interval)
-	if err != nil {
-		return nil, device, err
-	}
-	return token, device, nil
+	return &DeviceSession{
+		Device:        device,
+		tokenEndpoint: doc.TokenEndpoint,
+		clientID:      clientID,
+		interval:      interval,
+	}, nil
+}
+
+// WaitForToken polls the token endpoint until the user approves the device login.
+func (s *DeviceSession) WaitForToken(ctx context.Context) (*oauth2.Token, error) {
+	return pollToken(ctx, s.tokenEndpoint, s.clientID, s.Device.DeviceCode, s.interval)
 }
 
 func discover(ctx context.Context, issuer string) (discoveryDoc, error) {
