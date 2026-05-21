@@ -32,8 +32,8 @@ func init() {
 		Short: "Generate all docs: CLI reference, llms.txt, LLM instructions",
 		RunE:  runDocsGenerate,
 	}
-	genCmd.Flags().StringVarP(&docsOutputDir, "output", "o", "docs/reference/generated", "Output directory for CLI reference")
-	genCmd.Flags().StringVar(&docsDir, "docs-dir", "docs", "Docs source directory")
+	genCmd.Flags().StringVarP(&docsOutputDir, "output", "o", "docs/content/reference/generated", "Output directory for CLI reference")
+	genCmd.Flags().StringVar(&docsDir, "docs-dir", "docs/content", "Docs content directory")
 	genCmd.Flags().StringVar(&docsSiteURL, "site-url", "https://breee.github.io/outline-cli", "Site base URL for links")
 
 	docsCmd.AddCommand(genCmd)

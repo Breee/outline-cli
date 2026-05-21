@@ -1,0 +1,29 @@
+baseURL: https://breee.github.io/outline-cli/
+locale: en-us
+title: outline-cli
+theme: hextra
+
+menu:
+  main:
+    - name: Guide
+      pageRef: /guide
+      weight: 1
+    - name: Reference
+      pageRef: /reference
+      weight: 2
+    - name: GitHub
+      url: https://github.com/Breee/outline-cli
+      weight: 3
+      params:
+        icon: github
+
+params:
+  description: A CLI for pushing markdown files to Outline wiki
+  navbar:
+    displayTitle: true
+    displayLogo: false
+  footer:
+    displayCopyright: false
+  editURL:
+    enable: true
+    base: https://github.com/Breee/outline-cli/edit/main/docs/content
