@@ -362,6 +362,7 @@ A modern CLI for pushing markdown files to an Outline wiki.
 * [outline push](outline_push.md)	 - Push markdown files to Outline
 * [outline search](outline_search.md)	 - Search documents in Outline
 * [outline tui](outline_tui.md)	 - Interactive TUI for browsing and reading wiki documents
+* [outline version](outline_version.md)	 - Print version information
 
 ---
 
@@ -1289,6 +1290,47 @@ outline tui [query] [flags]
 
 ---
 
+## outline version
+
+## outline version
+
+Print version information
+
+```
+outline version [flags]
+```
+
+### Examples
+
+```
+  outline version
+  outline version -o json
+```
+
+### Options
+
+```
+  -h, --help            help for version
+  -o, --output string   Output format: json
+```
+
+### Options inherited from parent commands
+
+```
+      --api-token string           Outline API token
+      --config string              config file (default "$HOME/.outline-cli/config.yaml")
+      --oidc-access-token string   OIDC access token
+      --password string            Basic auth password
+      --server-url string          Outline server URL
+      --username string            Basic auth username
+```
+
+### SEE ALSO
+
+* [outline](outline.md)	 - Push markdown documents to Outline
+
+---
+
 ## Config File Reference
 
 Config file location: `~/.outline-cli/config.yaml` (override with `--config <path>`)
@@ -1533,6 +1575,21 @@ make build
 ```
 
 ## Shell Completions
+
+Source directly in your current session:
+
+```bash
+# Bash
+source <(outline completion bash)
+
+# Zsh
+source <(outline completion zsh)
+
+# Fish
+outline completion fish | source
+```
+
+Or install persistently:
 
 ```bash
 # Bash

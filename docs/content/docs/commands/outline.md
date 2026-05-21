@@ -35,4 +35,5 @@ A modern CLI for pushing markdown files to an Outline wiki.
 * [outline push](outline_push.md)	 - Push markdown files to Outline
 * [outline search](outline_search.md)	 - Search documents in Outline
 * [outline tui](outline_tui.md)	 - Interactive TUI for browsing and reading wiki documents
+* [outline version](outline_version.md)	 - Print version information
 
