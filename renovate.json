@@ -5,7 +5,6 @@
     ":dependencyDashboard",
     "mergeConfidence:all-badges",
     ":semanticCommits",
-    ":disableRateLimiting",
     ":separateMajorReleases",
     ":separatePatchReleases",
     ":automergeRequireAllStatusChecks",

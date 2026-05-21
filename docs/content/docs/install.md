@@ -44,6 +44,21 @@ make build
 
 ## Shell Completions
 
+Source directly in your current session:
+
+```bash
+# Bash
+source <(outline completion bash)
+
+# Zsh
+source <(outline completion zsh)
+
+# Fish
+outline completion fish | source
+```
+
+Or install persistently:
+
 ```bash
 # Bash
 outline completion bash > /etc/bash_completion.d/outline
