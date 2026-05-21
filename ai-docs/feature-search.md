@@ -40,7 +40,7 @@ outline search "setup" --limit 5
 
 ### `outline search --interactive`
 
-Opens TUI search (same as pressing `/` in `outline read`). Live results as you type, press Enter to read.
+Opens TUI search (same as pressing `/` in `outline tui`). Live results as you type, press Enter to read.
 
 ## Implementation
 

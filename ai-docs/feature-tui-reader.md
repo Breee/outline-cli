@@ -11,14 +11,14 @@ The best CLI tools (lazygit, k9s, htop) succeed because they meet you where you 
 
 ## Commands
 
-### `outline read [query]`
+### `outline tui [query]`
 
 Interactive TUI for browsing and reading wiki documents.
 
 ```bash
-outline read                     # open TUI with collection browser
-outline read "deploy guide"      # jump to search results for "deploy guide"
-outline read --collection ops    # browse a specific collection
+outline tui                     # open TUI with collection browser
+outline tui "deploy guide"      # jump to search results for "deploy guide"
+outline tui --collection ops    # browse a specific collection
 ```
 
 ### `outline cat <doc>`
@@ -63,27 +63,52 @@ Built with [charmbracelet/bubbletea](https://github.com/charmbracelet/bubbletea)
 - Images show `[image: alt text]` placeholder with URL
 - Links are numbered `[1]` with footnote list at bottom (like `lynx`)
 
-## Implementation Plan
+## Implementation
 
-1. Add `github.com/charmbracelet/bubbletea`, `bubbles`, `lipgloss`, `glamour` dependencies
-2. Create `internal/tui/` package:
-   - `model.go` — root model with view state machine
-   - `browser.go` — collection/document tree browser
-   - `reader.go` — document viewer with scroll
-   - `search.go` — search input + results list
-3. Create `cmd/read.go` and `cmd/cat.go` commands
-4. API calls needed: `collections.list`, `documents.search`, `documents.info`, `documents.list` (by collection)
+### Done
 
-## Caching
+1. Added `charm.land/bubbletea/v2`, `bubbles/v2`, `lipgloss/v2`, `glamour/v2` dependencies
+2. Created `internal/tui/` package:
+   - `keys.go` — key bindings (KeyMap)
+   - `model.go` — root model with view state machine, browser, reader, search views
+3. Created `cmd/read.go` (`outline tui`) and `cmd/cat.go` (`outline cat`) commands
+4. API integration: `collections.list`, `documents.search`, `documents.info`, `documents.list`
+5. Enhanced search: live debounced search (300ms), context excerpts, highlighted matches
+6. Alt screen mode, viewport scrolling, seamless search→navigate→read→back flow
 
-- Cache collection tree and document metadata locally in `~/.outline-cli/cache/`
-- TTL-based: refresh if older than 5 minutes (configurable)
-- `outline cache clear` to force refresh
-- Document content fetched on-demand, cached for session
+### Planned
 
-## Offline Mode
+- Preview pane (split view for wide terminals ≥120 cols, toggle with `p`)
+- Document caching (in-memory for session, optional disk cache with TTL)
+- Offline mode with cached content banner
+- `outline search --interactive` flag to launch TUI search directly
 
-If the server is unreachable, show cached content with a `[OFFLINE - cached at <time>]` banner. This makes the CLI useful on planes, in restricted networks, etc.
+## Architecture
+
+```
+cmd/read.go          — cobra command, creates tui.Model, runs tea.Program
+cmd/cat.go           — non-interactive, fetches doc + glamour render to stdout
+internal/tui/
+  keys.go            — KeyMap struct with all bindings
+  model.go           — Model struct, Init/Update/View, all views + messages
+```
+
+### State Machine
+
+```
+ViewBrowser ──enter──▶ ViewReader
+     │                      │
+     │◀──────esc────────────┘
+     │
+     │──/──▶ ViewSearch ──enter──▶ ViewReader
+     │◀──esc──┘       │◀──up(top)──┘
+```
+
+### Key Patterns
+
+- `searchTyping` bool gates whether keystrokes go to search input vs navigation
+- Debounce via `tea.Tick` + incrementing `searchTickID` (only latest tick fires search)
+- Viewport (bubbles) handles scroll in reader view; keys forwarded via Update passthrough
 
 ## Testing
 

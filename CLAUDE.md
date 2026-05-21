@@ -24,6 +24,7 @@ make help         # show this help
 - `internal/config/` — configuration, registry, keyring
 - `internal/oidc/` — OIDC browser/device auth flows
 - `internal/outline/` — Outline API client
+- `internal/tui/` — BubbleTea TUI (browse, read, search)
 
 ## Key Patterns
 
@@ -32,6 +33,10 @@ make help         # show this help
 - Push uses upsert: searches by title, updates if found, creates if not
 - Metadata headers in markdown: `<!-- Collection: X -->`, `<!-- Title: X -->`, `<!-- Parent: X -->`
 - Directory structure maps to document hierarchy (index.md = parent)
+- TUI uses bubbletea v2 Elm architecture: Model.Init/Update/View
+- TUI state machine: ViewBrowser → ViewReader, ViewBrowser → ViewSearch → ViewReader
+- Live search with debounce (300ms tick + incrementing ID pattern)
+- Glamour v2 renders markdown in TUI reader and `outline cat`
 
 ## Configuration
 

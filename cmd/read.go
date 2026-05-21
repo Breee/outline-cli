@@ -9,31 +9,31 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var readCollection string
+var tuiCollection string
 
 func init() {
-	readCmd := &cobra.Command{
-		Use:   "read [query]",
+	tuiCmd := &cobra.Command{
+		Use:   "tui [query]",
 		Short: "Interactive TUI for browsing and reading wiki documents",
 		Long: `Launch an interactive terminal UI for browsing collections and reading
 documents from Outline. Optionally pass a search query to jump directly
 to search results.`,
 		Example: `  # Open collection browser
-  outline read
+  outline tui
 
   # Jump to search results
-  outline read "deploy guide"
+  outline tui "deploy guide"
 
   # Browse a specific collection
-  outline read --collection ops`,
-		RunE: runRead,
+  outline tui --collection ops`,
+		RunE: runTUI,
 	}
 
-	readCmd.Flags().StringVar(&readCollection, "collection", "", "Browse a specific collection")
-	rootCmd.AddCommand(readCmd)
+	tuiCmd.Flags().StringVar(&tuiCollection, "collection", "", "Browse a specific collection")
+	rootCmd.AddCommand(tuiCmd)
 }
 
-func runRead(cmd *cobra.Command, args []string) error {
+func runTUI(cmd *cobra.Command, args []string) error {
 	client, err := newOutlineClient()
 	if err != nil {
 		return err

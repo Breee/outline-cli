@@ -22,6 +22,8 @@ A modern Go Cobra CLI named `outline` for pushing markdown files to an [Outline]
 - YAML config file at `~/.outline-cli/config.yaml`
 - Release artifacts for Linux (`amd64`, `arm64`, `armv7`), macOS (`amd64`, `arm64`), and Windows (`amd64`, `arm64`)
 - Shell autocompletion for bash, zsh, and fish
+- Interactive TUI (`outline tui`) for browsing and reading wiki documents with rendered markdown
+- `outline cat` to print documents to stdout with terminal-rendered markdown
 
 ## Install
 
@@ -133,6 +135,35 @@ env:
 
 ```bash
 outline push --collection-id my-docs --path ./docs
+```
+
+### Interactive TUI
+
+```bash
+# Browse collections and documents
+outline tui
+
+# Jump to search results
+outline tui "deploy guide"
+
+# Browse a specific collection
+outline tui --collection ops
+```
+
+Key bindings: `/` search, `j/k` navigate, `enter` open, `esc` back, `q` quit.
+Documents are rendered with syntax-highlighted markdown. Search is live with debounce.
+
+### Cat (Print Document)
+
+```bash
+# Rendered markdown output
+outline cat "Deployment Guide"
+
+# Raw markdown (pipe-friendly)
+outline cat "Deployment Guide" --raw | less
+
+# By document ID
+outline cat --id abc123
 ```
 
 ### Autocompletion

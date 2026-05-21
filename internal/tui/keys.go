@@ -4,20 +4,21 @@ import "charm.land/bubbles/v2/key"
 
 // KeyMap defines the key bindings for the TUI.
 type KeyMap struct {
-	Quit       key.Binding
-	Back       key.Binding
-	Up         key.Binding
-	Down       key.Binding
-	Enter      key.Binding
-	Search     key.Binding
-	Help       key.Binding
-	OpenURL    key.Binding
-	PageUp     key.Binding
-	PageDown   key.Binding
-	HalfPageUp key.Binding
-	HalfPageDn key.Binding
-	Top        key.Binding
-	Bottom     key.Binding
+	Quit        key.Binding
+	Back        key.Binding
+	Up          key.Binding
+	Down        key.Binding
+	Enter       key.Binding
+	Search      key.Binding
+	Help        key.Binding
+	OpenURL     key.Binding
+	PageUp      key.Binding
+	PageDown    key.Binding
+	HalfPageUp  key.Binding
+	HalfPageDn  key.Binding
+	Top         key.Binding
+	Bottom      key.Binding
+	TogglePreview key.Binding
 }
 
 var DefaultKeyMap = KeyMap{
@@ -76,5 +77,9 @@ var DefaultKeyMap = KeyMap{
 	Bottom: key.NewBinding(
 		key.WithKeys("G"),
 		key.WithHelp("G", "bottom"),
+	),
+	TogglePreview: key.NewBinding(
+		key.WithKeys("p"),
+		key.WithHelp("p", "toggle preview"),
 	),
 }
