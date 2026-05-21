@@ -5,7 +5,6 @@ description: "Configure authentication for outline-cli: API token, OIDC, or basi
 llmsDescription: "outline-cli authentication methods: 1) API token: set OUTLINE_API_TOKEN env var or `--api-token` flag or `outline config set api_token <token>` (stored in OS keyring). 2) OIDC browser login: run `outline auth oidc-login --port 10800`, uses PKCE + Dynamic Client Registration, token stored in keyring. 3) Basic auth: set OUTLINE_USERNAME and OUTLINE_PASSWORD env vars or `--username`/`--password` flags. Credential resolution priority: CLI flags > env vars > OS keyring > config file. Auto-reauthentication triggers OIDC flow when token expires (configurable via auth_method). Verify with `outline auth check`."
 ---
 
-# Authentication
 
 outline-cli supports three authentication methods. Choose based on your use case.
 
@@ -13,29 +12,33 @@ outline-cli supports three authentication methods. Choose based on your use case
 
 The simplest method. Get a token from **Settings → API** in Outline.
 
-=== "Environment Variable"
+{{< tabs >}}
 
-    ```bash
-    export OUTLINE_API_TOKEN=sk-your-token
-    export OUTLINE_HOST=https://outline.example.com
-    outline push --path ./docs/ --collection-id "Engineering"
-    ```
+{{< tab name="Environment Variable" >}}
+```bash
+export OUTLINE_API_TOKEN=sk-your-token
+export OUTLINE_HOST=https://outline.example.com
+outline push --path ./docs/ --collection-id "Engineering"
+```
+{{< /tab >}}
 
-=== "Config (stored in keyring)"
+{{< tab name="Config (stored in keyring)" >}}
+```bash
+outline config set server_url https://outline.example.com
+outline config set api_token sk-your-token
+# Token is now in your OS keyring — no env var needed
+outline push --path ./docs/ --collection-id "Engineering"
+```
+{{< /tab >}}
 
-    ```bash
-    outline config set server_url https://outline.example.com
-    outline config set api_token sk-your-token
-    # Token is now in your OS keyring — no env var needed
-    outline push --path ./docs/ --collection-id "Engineering"
-    ```
+{{< tab name="Flag" >}}
+```bash
+outline --api-token sk-your-token --server-url https://outline.example.com \
+  push --path ./docs/ --collection-id "Engineering"
+```
+{{< /tab >}}
 
-=== "Flag"
-
-    ```bash
-    outline --api-token sk-your-token --server-url https://outline.example.com \
-      push --path ./docs/ --collection-id "Engineering"
-    ```
+{{< /tabs >}}
 
 ## OIDC Browser Login (Recommended for developers)
 

@@ -5,7 +5,6 @@ description: "How directory layout maps to document hierarchy in Outline."
 llmsDescription: "outline-cli maps directory structure to Outline document hierarchy. Rules: index.md or README.md in a directory becomes the parent document for all sibling .md files in that directory. Subdirectories create nested levels. Files without a directory parent become top-level documents in the collection. Sort order: shallower depth first, index/README first, then alphabetical. Example: docs/guide/index.md becomes parent, docs/guide/install.md and docs/guide/setup.md become children of that parent."
 ---
 
-# Directory Structure
 
 When pushing a directory, the folder layout automatically creates document hierarchy in Outline.
 

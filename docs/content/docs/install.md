@@ -5,7 +5,6 @@ description: "Install outline-cli on Linux, macOS, or Windows."
 llmsDescription: "Install outline-cli: download binary from GitHub releases. Linux/macOS: curl tar.gz to /usr/local/bin. Windows: download zip. Also available via `go install github.com/Breee/outline-cli@latest`. Requires no runtime dependencies. Shell completions available for bash, zsh, fish via `outline completion <shell>`."
 ---
 
-# Installation
 
 ## Binary Download (Recommended)
 

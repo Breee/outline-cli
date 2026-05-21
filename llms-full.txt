@@ -52,9 +52,9 @@ This documentation is optimized for AI consumption:
 
 ## Next Steps
 
-- [Installation]({{< relref "install" >}}) — download and set up
-- [Quick Start]({{< relref "quickstart" >}}) — first push in 2 minutes
-- [CI/CD Integration]({{< relref "cicd" >}}) — automate doc publishing
+{{< cards >}}
+  {{< card link="docs" title="Read the Docs" subtitle="Installation, usage, configuration, and full CLI reference" icon="book-open" >}}
+{{< /cards >}}
 
 ---
 
@@ -96,9 +96,13 @@ Every documentation page includes an `llmsDescription` in its frontmatter — a 
 
 ---
 
-## Authentication
+## Documentation
 
-# Authentication
+
+
+---
+
+## Authentication
 
 outline-cli supports three authentication methods. Choose based on your use case.
 
@@ -106,29 +110,33 @@ outline-cli supports three authentication methods. Choose based on your use case
 
 The simplest method. Get a token from **Settings → API** in Outline.
 
-=== "Environment Variable"
+{{< tabs >}}
 
-    ```bash
-    export OUTLINE_API_TOKEN=sk-your-token
-    export OUTLINE_HOST=https://outline.example.com
-    outline push --path ./docs/ --collection-id "Engineering"
-    ```
+{{< tab name="Environment Variable" >}}
+```bash
+export OUTLINE_API_TOKEN=sk-your-token
+export OUTLINE_HOST=https://outline.example.com
+outline push --path ./docs/ --collection-id "Engineering"
+```
+{{< /tab >}}
 
-=== "Config (stored in keyring)"
+{{< tab name="Config (stored in keyring)" >}}
+```bash
+outline config set server_url https://outline.example.com
+outline config set api_token sk-your-token
+# Token is now in your OS keyring — no env var needed
+outline push --path ./docs/ --collection-id "Engineering"
+```
+{{< /tab >}}
 
-    ```bash
-    outline config set server_url https://outline.example.com
-    outline config set api_token sk-your-token
-    # Token is now in your OS keyring — no env var needed
-    outline push --path ./docs/ --collection-id "Engineering"
-    ```
+{{< tab name="Flag" >}}
+```bash
+outline --api-token sk-your-token --server-url https://outline.example.com \
+  push --path ./docs/ --collection-id "Engineering"
+```
+{{< /tab >}}
 
-=== "Flag"
-
-    ```bash
-    outline --api-token sk-your-token --server-url https://outline.example.com \
-      push --path ./docs/ --collection-id "Engineering"
-    ```
+{{< /tabs >}}
 
 ## OIDC Browser Login (Recommended for developers)
 
@@ -196,8 +204,6 @@ Output:
 ---
 
 ## CI/CD Integration
-
-# CI/CD Integration
 
 Publish documentation automatically on every git push. No config file or keyring needed — environment variables are all that's required.
 
@@ -285,21 +291,9 @@ outline push --collection-id "${OUTLINE_COLLECTION}" --path ./docs/ --create-col
 | `OUTLINE_API_TOKEN` | Yes | API token |
 | `OUTLINE_COLLECTION` | No | Default collection (can use `--collection-id` flag instead) |
 
-!!! tip "`OUTLINE_HOST` vs `OUTLINE_SERVER_URL`"
-    Both work. `OUTLINE_HOST` is shorter and more natural for CI configs.
-
-## Conditional Publishing
-
-Only publish when docs actually change:
-
-```yaml
-on:
-  push:
-    branches: [main]
-    paths:
-      - 'docs/**'
-      - '*.md'
-```
+{{< callout type="info" >}}
+Both `OUTLINE_HOST` and `OUTLINE_SERVER_URL` work. `OUTLINE_HOST` is shorter and more natural for CI configs.
+{{< /callout >}}
 
 ## Exit Codes
 
@@ -895,6 +889,7 @@ Available keys:
   oidc_port
   api_token
   password
+  oidc_access_token
 
 ```
 outline config set <key> <value> [flags]
@@ -981,182 +976,57 @@ outline push [flags]
 
 ---
 
-## CLI Command Reference
-
-# CLI Command Reference
-
-## Global Flags
-
-These flags apply to all commands:
-
-| Flag | Env Var | Description |
-|------|---------|-------------|
-| `--config` | — | Config file path (default `~/.outline-cli/config.yaml`) |
-| `--server-url` | `OUTLINE_SERVER_URL`, `OUTLINE_HOST` | Outline server URL |
-| `--api-token` | `OUTLINE_API_TOKEN` | API token |
-| `--username` | `OUTLINE_USERNAME` | Basic auth username |
-| `--password` | `OUTLINE_PASSWORD` | Basic auth password |
-| `--oidc-access-token` | `OUTLINE_OIDC_ACCESS_TOKEN` | OIDC access token |
-
----
-
-## `outline push`
-
-Push markdown files to an Outline collection.
-
-```bash
-outline push --path ./docs/ --collection-id "Engineering"
-```
-
-| Flag | Default | Description |
-|------|---------|-------------|
-| `-p, --path` | `.` | Markdown file or directory to push |
-| `--collection-id` | — | Target collection (name, slug, or UUID) |
-| `--publish` | `true` | Publish created documents |
-| `--create-collection` | `false` | Create collection if it doesn't exist |
-
----
-
-## `outline auth oidc-login`
-
-Authenticate via browser-based OIDC flow.
-
-```bash
-outline auth oidc-login
-```
-
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--port` | `10800` | Local port for OAuth callback server |
-
----
-
-## `outline auth check`
-
-Verify stored credentials are valid.
-
-```bash
-outline auth check
-```
-
-Prints: authenticated user name, email, and team. Exit code 1 if not authenticated.
-
----
-
-## `outline config set`
-
-Set a configuration value.
-
-```bash
-outline config set <key> <value>
-```
-
-Secret keys (`api_token`, `password`) are stored in the OS keyring.
-
----
-
-## `outline config get`
-
-Print a configuration value.
-
-```bash
-outline config get <key>
-```
-
----
-
-## `outline config list`
-
-List all set configuration values. Secrets are masked as `***`.
-
-```bash
-outline config list
-```
-
----
-
-## `outline config path`
-
-Print the config file path.
-
-```bash
-outline config path
-```
-
----
-
-## `outline completion`
-
-Generate shell completion scripts.
-
-```bash
-outline completion bash
-outline completion zsh
-outline completion fish
-```
-
----
-
 ## Config File Reference
 
-# Config File Reference
-
-Config file location: `~/.outline-cli/config.yaml`
+Config file location: `~/.outline-cli/config.yaml` (override with `--config <path>`)
 
 ## Format
 
 ```yaml
-server_url: https://outline.example.com
-auth_method: oidc
-token_storage: keyring
-oidc_port: 10800
+server_url: # Outline server base URL
+auth_method: # Auth method: api_token, oidc, basic
+token_storage: # Secret storage backend: keyring, file
+oidc_port: # Local port for OIDC callback
 ```
 
 ## Fields
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `server_url` | string | — | Outline server URL |
-| `auth_method` | string | `oidc` | Auto-auth method (`oidc`, `api-token`, `basic`) |
-| `token_storage` | string | `keyring` | Where to store secrets (`keyring`, `file`) |
-| `oidc_port` | int | `10800` | Local port for OIDC callback |
-| `oidc_access_token` | string | — | OIDC token (only if `token_storage=file`) |
-| `api_token` | string | — | API token (only if `token_storage=file`) |
-| `password` | string | — | Basic auth password (only if `token_storage=file`) |
+| Key | Secret | Env Var | Description |
+|-----|--------|---------|-------------|
+| `server_url` | no | `OUTLINE_SERVER_URL` | Outline server base URL |
+| `auth_method` | no | `OUTLINE_AUTH_METHOD` | Auth method: api_token, oidc, basic |
+| `token_storage` | no | — | Secret storage backend: keyring, file |
+| `oidc_port` | no | — | Local port for OIDC callback |
+| `api_token` | yes | `OUTLINE_API_TOKEN` | API bearer token |
+| `password` | yes | `OUTLINE_PASSWORD` | Basic auth password |
+| `oidc_access_token` | yes | `OUTLINE_OIDC_ACCESS_TOKEN` | OIDC access token (set by auth oidc-login) |
 
 ## File Permissions
 
 The config file is always written with `0600` permissions (owner read/write only).
 
-## Keyring Storage
+## Secret Storage
 
-When `token_storage=keyring` (default), secrets are stored in the OS keyring:
-
-| Keyring Service | Keyring User | Credential |
-|-----------------|--------------|------------|
-| `outline-cli` | `oidc_access_token` | OIDC token |
-| `outline-cli` | `api_token` | API token |
-| `outline-cli` | `basic_password` | Basic auth password |
-
-The config file only stores non-secret values in this mode.
-
-## File Storage (Headless)
-
-For environments without a keyring (CI, containers, SSH sessions):
-
-```bash
-outline config set token_storage file
-```
-
-Secrets are then written to the YAML file in plaintext. Ensure the file is not committed to git.
+When `token_storage=keyring` (default), secret keys are stored in the OS keyring under service `outline-cli`.
+Set `token_storage=file` for headless environments (CI, containers) — secrets are then written to the YAML file in plaintext.
 
 ---
 
 ## Configuration
 
-# Configuration
-
 outline-cli uses a YAML config file at `~/.outline-cli/config.yaml` with OS keyring for secrets.
+
+## Custom Config File Location
+
+Override the config path with `--config`:
+
+```bash
+outline --config ./my-config.yaml push --path ./docs/ --collection-id "Docs"
+```
+
+{{< callout type="warning" >}}
+If you use a project-local config file, add it to `.gitignore` — it may contain secrets when `token_storage=file` is set.
+{{< /callout >}}
 
 ## Commands
 
@@ -1204,14 +1074,9 @@ token_storage: keyring
 oidc_port: 10800
 ```
 
-!!! warning
-    Never commit your config file to git. Add `config.yaml` to `.gitignore`.
-
 ---
 
 ## Directory Structure
-
-# Directory Structure
 
 When pushing a directory, the folder layout automatically creates document hierarchy in Outline.
 
@@ -1283,34 +1148,17 @@ This places the document under "Reference" regardless of its file location.
 
 ## Environment Variables
 
-# Environment Variables
-
 All environment variables recognized by outline-cli.
 
-## Authentication
-
-| Variable | Description |
-|----------|-------------|
-| `OUTLINE_API_TOKEN` | API token for Outline |
-| `OUTLINE_USERNAME` | Basic auth username |
-| `OUTLINE_PASSWORD` | Basic auth password |
-| `OUTLINE_OIDC_ACCESS_TOKEN` | OIDC access token (set automatically by `auth oidc-login`) |
-
-## Server
-
-| Variable | Description |
-|----------|-------------|
-| `OUTLINE_HOST` | Outline server URL (preferred in CI/CD) |
-| `OUTLINE_SERVER_URL` | Outline server URL (alternative) |
-
-!!! note
-    If both `OUTLINE_HOST` and `OUTLINE_SERVER_URL` are set, `OUTLINE_SERVER_URL` takes priority (it maps directly to the `--server-url` flag).
-
-## Behavior
-
-| Variable | Description |
-|----------|-------------|
-| `OUTLINE_AUTH_METHOD` | Auto-auth method: `oidc`, `api-token`, or `basic` |
+| Variable | Config Key | Description |
+|----------|-----------|-------------|
+| `OUTLINE_SERVER_URL` | `server_url` | Outline server base URL |
+| `OUTLINE_HOST` | `server_url` | Outline server base URL (alias) |
+| `OUTLINE_AUTH_METHOD` | `auth_method` | Auth method: api_token, oidc, basic |
+| `OUTLINE_API_TOKEN` | `api_token` | API bearer token |
+| `OUTLINE_PASSWORD` | `password` | Basic auth password |
+| `OUTLINE_USERNAME` | — | Basic auth username |
+| `OUTLINE_OIDC_ACCESS_TOKEN` | `oidc_access_token` | OIDC access token (set by auth oidc-login) |
 
 ## Priority
 
@@ -1320,7 +1168,7 @@ CLI flags > Environment variables > OS keyring > Config file
 
 ## CI/CD Minimal Setup
 
-Only two variables are needed for CI:
+Only two variables are needed:
 
 ```bash
 export OUTLINE_HOST=https://outline.example.com
@@ -1330,61 +1178,7 @@ outline push --collection-id "Docs" --path ./docs/
 
 ---
 
-## Examples
-
-# Examples
-
-The [`examples/`](https://github.com/Breee/outline-cli/tree/main/examples) directory contains sample markdown files you can use to test outline-cli.
-
-## Single File Examples
-
-| File | Demonstrates |
-|------|-------------|
-| `minimal.md` | Bare minimum: just content, title from filename |
-| `title-from-h1.md` | Title resolved from `# H1` heading |
-| `title-from-filename.md` | No heading, title from filename |
-| `rich-content.md` | Tables, code blocks, lists |
-| `different-collection.md` | `<!-- Collection: ... -->` override |
-| `no-headers.md` | No metadata at all |
-| `markdown-reference.md` | Full markdown feature showcase |
-
-## Directory Example
-
-```
-examples/guide/
-├── index.md
-├── faq.md
-├── setup/
-│   ├── index.md
-│   └── install.md
-└── usage/
-    ├── index.md
-    └── push.md
-```
-
-Push with:
-
-```bash
-outline push --path ./examples/guide/ --collection-id "Test" --create-collection
-```
-
-This creates the full nested document tree under a "Test" collection.
-
-## Try It
-
-```bash
-# Single file
-outline push --path ./examples/minimal.md --collection-id "Test" --create-collection
-
-# Directory with hierarchy
-outline push --path ./examples/guide/ --collection-id "Test Guide" --create-collection
-```
-
----
-
 ## Installation
-
-# Installation
 
 ## Binary Download (Recommended)
 
@@ -1444,8 +1238,6 @@ outline --help
 ---
 
 ## Metadata Headers
-
-# Metadata Headers
 
 Control per-file behavior using HTML comments at the top of your markdown files.
 
@@ -1509,8 +1301,9 @@ Explicit parent assignment for nesting:
 
 This creates `Installation` as a child of `User Guide` in the Outline tree.
 
-!!! note
-    The parent document must already exist (or be pushed in the same batch). See [Directory Structure]({{< relref "directories" >}}) for automatic parent resolution.
+{{< callout type="info" >}}
+The parent document must already exist (or be pushed in the same batch). See [Directory Structure]({{< relref "directories" >}}) for automatic parent resolution.
+{{< /callout >}}
 
 ## Icons
 
@@ -1525,8 +1318,6 @@ Use emoji or Outline-supported icon names:
 ---
 
 ## Pushing Documents
-
-# Pushing Documents
 
 The `push` command uploads markdown files to your Outline wiki.
 
@@ -1593,8 +1384,6 @@ When pushing a directory:
 
 ## Quick Start
 
-# Quick Start
-
 Push your first document to Outline in under 2 minutes.
 
 ## Prerequisites
@@ -1609,11 +1398,13 @@ export OUTLINE_HOST=https://outline.example.com
 export OUTLINE_API_TOKEN=sk-your-api-token
 ```
 
-!!! tip "For persistent config"
-    ```bash
-    outline config set server_url https://outline.example.com
-    outline config set api_token sk-your-api-token  # stored in OS keyring
-    ```
+{{< callout type="info" >}}
+**For persistent config:**
+```bash
+outline config set server_url https://outline.example.com
+outline config set api_token sk-your-api-token  # stored in OS keyring
+```
+{{< /callout >}}
 
 ## 2. Push a single file
 
@@ -1646,6 +1437,58 @@ Check your Outline instance — the documents are live!
 - [Authentication options]({{< relref "auth" >}}) — OIDC, API token, or basic auth
 - [Metadata headers]({{< relref "metadata" >}}) — control title, collection, icon per file
 - [CI/CD integration]({{< relref "cicd" >}}) — automate on every git push
+
+---
+
+## Examples
+
+# Examples
+
+The [`examples/`](https://github.com/Breee/outline-cli/tree/main/examples) directory contains sample markdown files you can use to test outline-cli.
+
+## Single File Examples
+
+| File | Demonstrates |
+|------|-------------|
+| `minimal.md` | Bare minimum: just content, title from filename |
+| `title-from-h1.md` | Title resolved from `# H1` heading |
+| `title-from-filename.md` | No heading, title from filename |
+| `rich-content.md` | Tables, code blocks, lists |
+| `different-collection.md` | `<!-- Collection: ... -->` override |
+| `no-headers.md` | No metadata at all |
+| `markdown-reference.md` | Full markdown feature showcase |
+
+## Directory Example
+
+```
+examples/guide/
+├── index.md
+├── faq.md
+├── setup/
+│   ├── index.md
+│   └── install.md
+└── usage/
+    ├── index.md
+    └── push.md
+```
+
+Push with:
+
+```bash
+outline push --path ./examples/guide/ --collection-id "Test" --create-collection
+```
+
+This creates the full nested document tree under a "Test" collection.
+
+## Try It
+
+```bash
+# Single file
+outline push --path ./examples/minimal.md --collection-id "Test" --create-collection
+
+# Directory with hierarchy
+outline push --path ./examples/guide/ --collection-id "Test Guide" --create-collection
+```
 
 ---
 

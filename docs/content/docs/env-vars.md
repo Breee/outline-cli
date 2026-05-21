@@ -1,0 +1,34 @@
+---
+title: "Environment Variables"
+weight: 65
+description: "All environment variables supported by outline-cli."
+generated: true
+---
+
+All environment variables recognized by outline-cli.
+
+| Variable | Config Key | Description |
+|----------|-----------|-------------|
+| `OUTLINE_SERVER_URL` | `server_url` | Outline server base URL |
+| `OUTLINE_HOST` | `server_url` | Outline server base URL (alias) |
+| `OUTLINE_AUTH_METHOD` | `auth_method` | Auth method: api_token, oidc, basic |
+| `OUTLINE_API_TOKEN` | `api_token` | API bearer token |
+| `OUTLINE_PASSWORD` | `password` | Basic auth password |
+| `OUTLINE_USERNAME` | — | Basic auth username |
+| `OUTLINE_OIDC_ACCESS_TOKEN` | `oidc_access_token` | OIDC access token (set by auth oidc-login) |
+
+## Priority
+
+```
+CLI flags > Environment variables > OS keyring > Config file
+```
+
+## CI/CD Minimal Setup
+
+Only two variables are needed:
+
+```bash
+export OUTLINE_HOST=https://outline.example.com
+export OUTLINE_API_TOKEN=sk-your-token
+outline push --collection-id "Docs" --path ./docs/
+```

@@ -6,7 +6,7 @@ theme: hextra
 menu:
   main:
     - name: Docs
-      pageRef: /
+      pageRef: /docs
       weight: 1
     - name: GitHub
       url: https://github.com/Breee/outline-cli

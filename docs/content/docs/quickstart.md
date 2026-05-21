@@ -5,7 +5,6 @@ description: "Push your first document to Outline in under 2 minutes."
 llmsDescription: "Quick start for outline-cli: 1) Set OUTLINE_HOST and OUTLINE_API_TOKEN env vars. 2) Run `outline push --collection-id <name-or-uuid> --path ./file.md` to push a single file. 3) Run `outline push --collection-id <name> --path ./docs/` to push a directory tree. Files are upserted by title. Use `--create-collection` flag to auto-create the target collection."
 ---
 
-# Quick Start
 
 Push your first document to Outline in under 2 minutes.
 
@@ -21,11 +20,13 @@ export OUTLINE_HOST=https://outline.example.com
 export OUTLINE_API_TOKEN=sk-your-api-token
 ```
 
-!!! tip "For persistent config"
-    ```bash
-    outline config set server_url https://outline.example.com
-    outline config set api_token sk-your-api-token  # stored in OS keyring
-    ```
+{{< callout type="info" >}}
+**For persistent config:**
+```bash
+outline config set server_url https://outline.example.com
+outline config set api_token sk-your-api-token  # stored in OS keyring
+```
+{{< /callout >}}
 
 ## 2. Push a single file
 
