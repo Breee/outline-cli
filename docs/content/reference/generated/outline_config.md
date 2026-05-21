@@ -11,7 +11,7 @@ Manage CLI configuration
 
 ### Synopsis
 
-Get, set, or list configuration values stored in /home/bree/.outline-cli/config.yaml
+Get, set, or list configuration values stored in $HOME/.outline-cli/config.yaml
 
 ### Options
 

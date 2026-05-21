@@ -12,7 +12,7 @@ func init() {
 	configCmd := &cobra.Command{
 		Use:   "config",
 		Short: "Manage CLI configuration",
-		Long:  "Get, set, or list configuration values stored in " + config.DefaultPath(),
+		Long:  "Get, set, or list configuration values stored in $HOME/.outline-cli/config.yaml",
 	}
 
 	configCmd.AddCommand(
