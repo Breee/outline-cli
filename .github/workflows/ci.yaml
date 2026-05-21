@@ -60,7 +60,7 @@ jobs:
         run: |
           if [[ -n "$(git status --porcelain)" ]]; then
             echo "::error::Docs are out of date. Run 'make docs' and commit the result."
-            git diff --stat
+            git diff
             exit 1
           fi
 
