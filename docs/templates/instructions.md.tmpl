@@ -1,0 +1,50 @@
+# outline-cli
+
+A Go CLI for pushing markdown documents to Outline wiki.
+
+## Build & Test
+
+```bash
+{{- range .Targets}}
+make {{printf "%-12s" .Name}} # {{.Comment}}
+{{- end}}
+```
+
+## Architecture
+{{- range .Packages}}
+- `{{.}}`
+{{- end}}
+
+## Key Patterns
+
+- Auth priority: CLI flags > env vars > OS keyring > config file
+- Secrets (api_token, password, oidc token) stored in OS keyring via `github.com/zalando/go-keyring`
+- Push uses upsert: searches by title, updates if found, creates if not
+- Metadata headers in markdown: `<!-- Collection: X -->`, `<!-- Title: X -->`, `<!-- Parent: X -->`
+- Directory structure maps to document hierarchy (index.md = parent)
+
+## Env Vars
+{{- range .EnvVars}}
+- `{{.}}`
+{{- end}}
+
+## Config Keys
+
+Valid keys for `outline config set <key> <value>`:
+{{- range .ConfigKeys}}
+- `{{.Name}}`{{if .Secret}} (stored in OS keyring){{end}}
+{{- end}}
+
+## Docs Generation
+
+Reference docs are auto-generated from the cobra command tree. Never hand-edit files in `docs/reference/generated/`.
+
+```bash
+make docs  # runs: go run . docs generate
+```
+
+This produces:
+- `docs/reference/generated/*.md` — CLI reference pages
+- `llms.txt` — structured index for AI tools
+- `llms-full.txt` — complete docs as single file
+- `.github/copilot-instructions.md`, `CLAUDE.md`, `.cursor/rules` — AI tool instructions

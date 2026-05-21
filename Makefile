@@ -4,7 +4,7 @@ COMMIT    := $(shell git rev-parse --short HEAD 2>/dev/null)
 DATE      := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 GOFLAGS   := -ldflags "-s -w -X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.date=$(DATE)"
 
-.PHONY: all build test vet e2e completions dev-up dev-down dev-logs clean help
+.PHONY: all build test vet e2e completions docs dev-up dev-down dev-logs clean help
 
 all: vet test build
 
@@ -26,6 +26,10 @@ completions:
 	go run . completion zsh > completions/outline.zsh
 	go run . completion fish > completions/outline.fish
 
+docs:
+	go run . docs generate
+	@echo "Generated: docs/reference/generated/, llms.txt, llms-full.txt, .github/copilot-instructions.md, CLAUDE.md, .cursor/rules"
+
 dev-up:
 	docker compose -f dev/docker-compose.yml up -d
 
@@ -46,7 +50,9 @@ help:
 	@echo "  vet          - run go vet"
 	@echo "  e2e          - run e2e tests"
 	@echo "  completions  - generate shell completions"
+	@echo "  docs         - generate all docs (reference, llms.txt, LLM instructions)"
 	@echo "  dev-up       - start dev environment"
 	@echo "  dev-down     - stop dev environment"
 	@echo "  dev-logs     - tail dev logs"
 	@echo "  clean        - remove binary"
+	@echo "  help         - show this help"

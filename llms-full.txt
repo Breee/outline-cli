@@ -1,0 +1,1587 @@
+# outline-cli
+
+> A CLI for pushing markdown files to Outline wiki.
+
+## AI Integration
+
+# AI Integration
+
+This documentation site is designed for both human readers and AI assistants.
+
+## llms.txt
+
+Available at [`/llms.txt`](/llms.txt) — a structured index of all documentation pages with concise descriptions, following the [llms.txt standard](https://llmstxt.org/).
+
+AI assistants can fetch this single file to understand what outline-cli does and find relevant documentation.
+
+## llms-full.txt
+
+Available at [`/llms-full.txt`](/llms-full.txt) — the full text of all documentation concatenated into one file.
+
+Use this when you need the complete documentation context (e.g., for code generation tasks involving outline-cli).
+
+## For AI Coding Assistants
+
+If you're an AI assistant helping a user with outline-cli:
+
+1. **Quick reference**: Fetch `/llms.txt` for a page index
+2. **Full context**: Fetch `/llms-full.txt` for all documentation
+3. **Key facts**:
+   - Push markdown to Outline: `outline push --path ./docs/ --collection-id "Name"`
+   - Auth methods: OIDC (browser), API token, basic auth
+   - Config: `~/.outline-cli/config.yaml`, secrets in OS keyring
+   - CI/CD: Only needs `OUTLINE_HOST` + `OUTLINE_API_TOKEN` env vars
+   - Metadata headers: `<!-- Collection: X -->`, `<!-- Title: X -->`, `<!-- Parent: X -->`
+   - Directory `index.md` → parent doc, sibling `.md` → children
+
+## Structured Data per Page
+
+Every documentation page includes an `llmsDescription` in its frontmatter — a technical, command-syntax-aware summary designed for AI consumption. These are aggregated into `llms.txt`.
+
+---
+
+## Examples
+
+# Examples
+
+The [`examples/`](https://github.com/Breee/outline-cli/tree/main/examples) directory contains sample markdown files you can use to test outline-cli.
+
+## Single File Examples
+
+| File | Demonstrates |
+|------|-------------|
+| `minimal.md` | Bare minimum: just content, title from filename |
+| `title-from-h1.md` | Title resolved from `# H1` heading |
+| `title-from-filename.md` | No heading, title from filename |
+| `rich-content.md` | Tables, code blocks, lists |
+| `different-collection.md` | `<!-- Collection: ... -->` override |
+| `no-headers.md` | No metadata at all |
+| `markdown-reference.md` | Full markdown feature showcase |
+
+## Directory Example
+
+```
+examples/guide/
+├── index.md
+├── faq.md
+├── setup/
+│   ├── index.md
+│   └── install.md
+└── usage/
+    ├── index.md
+    └── push.md
+```
+
+Push with:
+
+```bash
+outline push --path ./examples/guide/ --collection-id "Test" --create-collection
+```
+
+This creates the full nested document tree under a "Test" collection.
+
+## Try It
+
+```bash
+# Single file
+outline push --path ./examples/minimal.md --collection-id "Test" --create-collection
+
+# Directory with hierarchy
+outline push --path ./examples/guide/ --collection-id "Test Guide" --create-collection
+```
+
+---
+
+## Authentication
+
+# Authentication
+
+outline-cli supports three authentication methods. Choose based on your use case.
+
+## API Token (Recommended for CI/CD)
+
+The simplest method. Get a token from **Settings → API** in Outline.
+
+=== "Environment Variable"
+
+    ```bash
+    export OUTLINE_API_TOKEN=sk-your-token
+    export OUTLINE_HOST=https://outline.example.com
+    outline push --path ./docs/ --collection-id "Engineering"
+    ```
+
+=== "Config (stored in keyring)"
+
+    ```bash
+    outline config set server_url https://outline.example.com
+    outline config set api_token sk-your-token
+    # Token is now in your OS keyring — no env var needed
+    outline push --path ./docs/ --collection-id "Engineering"
+    ```
+
+=== "Flag"
+
+    ```bash
+    outline --api-token sk-your-token --server-url https://outline.example.com \
+      push --path ./docs/ --collection-id "Engineering"
+    ```
+
+## OIDC Browser Login (Recommended for developers)
+
+Interactive browser login using OAuth2 with PKCE. No token management needed — the CLI handles everything.
+
+```bash
+outline config set server_url https://outline.example.com
+outline auth oidc-login
+```
+
+This will:
+
+1. Discover your Outline instance's OAuth2 configuration
+2. Register a public OAuth2 client (Dynamic Client Registration)
+3. Open your browser for authentication
+4. Store the access token in your OS keyring
+
+After login, all commands work without additional flags.
+
+## Basic Auth
+
+```bash
+export OUTLINE_USERNAME=user@example.com
+export OUTLINE_PASSWORD=secret
+export OUTLINE_HOST=https://outline.example.com
+outline push --path ./docs/ --collection-id "Docs"
+```
+
+## Credential Resolution Order
+
+When multiple credentials are available, this priority applies (highest wins):
+
+1. CLI flags (`--api-token`, `--username`/`--password`, `--oidc-access-token`)
+2. Environment variables (`OUTLINE_API_TOKEN`, `OUTLINE_HOST`)
+3. OS keyring (set via `config set` or `auth oidc-login`)
+4. Config file (`~/.outline-cli/config.yaml`)
+
+## Auto-Reauthentication
+
+If your token expires during a `push`, the CLI automatically re-authenticates using your configured method:
+
+```bash
+outline config set auth_method oidc    # default — triggers browser login
+outline config set auth_method api-token  # requires valid token in env/keyring
+```
+
+## Verify Credentials
+
+```bash
+outline auth check
+```
+
+Output:
+```
+✓ Authenticated as jane@example.com (Engineering team)
+```
+
+## Security
+
+- All persisted credentials are stored in the **OS keyring** (libsecret on Linux, Keychain on macOS, Credential Manager on Windows)
+- Config file is written with `0600` permissions
+- If keyring is unavailable (headless/container), falls back to config file with a warning
+- Secrets are never logged; `config list` masks them as `***`
+
+---
+
+## CI/CD Integration
+
+# CI/CD Integration
+
+Publish documentation automatically on every git push. No config file or keyring needed — environment variables are all that's required.
+
+## GitHub Actions
+
+### Using the Action (Recommended)
+
+```yaml
+name: Publish Docs
+
+on:
+  push:
+    branches: [main]
+    paths: ['docs/**']
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install outline-cli
+        run: |
+          curl -sL "https://github.com/Breee/outline-cli/releases/latest/download/outline_linux_amd64.tar.gz" | sudo tar xz -C /usr/local/bin outline
+
+      - name: Push docs to Outline
+        env:
+          OUTLINE_HOST: ${{ vars.OUTLINE_URL }}
+          OUTLINE_API_TOKEN: ${{ secrets.OUTLINE_API_TOKEN }}
+        run: |
+          outline push \
+            --collection-id "Engineering" \
+            --path ./docs/ \
+            --create-collection
+```
+
+### Setup
+
+1. Go to your Outline instance → **Settings → API** → create a token
+2. In your GitHub repo → **Settings → Secrets and variables → Actions**:
+   - Add secret: `OUTLINE_API_TOKEN` = your token
+   - Add variable: `OUTLINE_URL` = `https://outline.example.com`
+
+## GitLab CI
+
+```yaml
+publish-docs:
+  image: alpine:latest
+  stage: deploy
+  only:
+    changes:
+      - docs/**
+    refs:
+      - main
+  before_script:
+    - apk add --no-cache curl
+    - curl -sL "https://github.com/Breee/outline-cli/releases/latest/download/outline_linux_amd64.tar.gz" | tar xz -C /usr/local/bin
+  script:
+    - outline push --collection-id "$OUTLINE_COLLECTION" --path ./docs/ --create-collection
+  variables:
+    OUTLINE_HOST: https://outline.example.com
+    # OUTLINE_API_TOKEN set in CI/CD settings
+```
+
+## Generic CI
+
+For any CI system that can run shell commands:
+
+```bash
+#!/bin/bash
+set -e
+
+# Install
+curl -sL "https://github.com/Breee/outline-cli/releases/latest/download/outline_linux_amd64.tar.gz" | tar xz -C /usr/local/bin
+
+# Push (env vars must be set: OUTLINE_HOST, OUTLINE_API_TOKEN)
+outline push --collection-id "${OUTLINE_COLLECTION}" --path ./docs/ --create-collection
+```
+
+## Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `OUTLINE_HOST` | Yes | Outline server URL |
+| `OUTLINE_API_TOKEN` | Yes | API token |
+| `OUTLINE_COLLECTION` | No | Default collection (can use `--collection-id` flag instead) |
+
+!!! tip "`OUTLINE_HOST` vs `OUTLINE_SERVER_URL`"
+    Both work. `OUTLINE_HOST` is shorter and more natural for CI configs.
+
+## Conditional Publishing
+
+Only publish when docs actually change:
+
+```yaml
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - '*.md'
+```
+
+## Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| `0` | All documents pushed successfully |
+| `1` | Error (auth failure, network error, invalid config) |
+
+Use this for CI gates — a failed push breaks the build.
+
+---
+
+## Configuration
+
+# Configuration
+
+outline-cli uses a YAML config file at `~/.outline-cli/config.yaml` with OS keyring for secrets.
+
+## Commands
+
+```bash
+outline config set server_url https://outline.example.com
+outline config get server_url
+outline config list
+outline config path
+```
+
+## Available Keys
+
+| Key | Values | Description |
+|-----|--------|-------------|
+| `server_url` | URL | Outline server URL |
+| `auth_method` | `oidc`, `api-token`, `basic` | Authentication method for auto-auth |
+| `token_storage` | `keyring`, `file` | Where to store secrets |
+| `oidc_port` | `1`–`65535` | Local port for OIDC callback |
+| `api_token` | string | API token (stored in keyring) |
+| `password` | string | Basic auth password (stored in keyring) |
+
+## Secret Storage
+
+Keys `api_token` and `password` are **stored in the OS keyring** by default:
+
+```bash
+outline config set api_token sk-abc123
+# → stored in libsecret/Keychain/Credential Manager, NOT in config.yaml
+```
+
+For headless environments (CI, containers) where keyring is unavailable:
+
+```bash
+outline config set token_storage file
+outline config set api_token sk-abc123
+# → stored in config.yaml (0600 permissions)
+```
+
+## Config File Format
+
+```yaml
+server_url: https://outline.example.com
+auth_method: oidc
+token_storage: keyring
+oidc_port: 10800
+```
+
+!!! warning
+    Never commit your config file to git. Add `config.yaml` to `.gitignore`.
+
+---
+
+## Directory Structure
+
+# Directory Structure
+
+When pushing a directory, the folder layout automatically creates document hierarchy in Outline.
+
+## Rules
+
+1. `index.md` or `README.md` in a directory → becomes the **parent document**
+2. Other `.md` files in the same directory → become **children** of that parent
+3. Subdirectories → create **nested levels**
+4. Files at the root of the push path → become **top-level** collection documents
+
+## Example
+
+Given this directory:
+
+```
+docs/
+├── index.md              → "Documentation" (top-level parent)
+├── quickstart.md         → "Quick Start" (child of Documentation)
+├── guide/
+│   ├── index.md          → "Guide" (child of Documentation, parent of below)
+│   ├── install.md        → "Installation" (child of Guide)
+│   └── auth.md           → "Authentication" (child of Guide)
+└── reference/
+    ├── index.md          → "Reference" (child of Documentation, parent of below)
+    └── commands.md       → "Commands" (child of Reference)
+```
+
+Results in this Outline structure:
+
+```
+Collection: Engineering
+├── Documentation
+│   ├── Quick Start
+│   ├── Guide
+│   │   ├── Installation
+│   │   └── Authentication
+│   └── Reference
+│       └── Commands
+```
+
+## Sort Order
+
+Documents are pushed in this order (ensuring parents exist before children):
+
+1. Shallower depth first
+2. `index.md` / `README.md` before other files at the same level
+3. Alphabetical within the same priority
+
+## Overriding with Metadata
+
+You can override the automatic parent with a `<!-- Parent: ... -->` header:
+
+```markdown
+<!-- Parent: Reference -->
+<!-- Title: API Reference -->
+
+# API Reference
+```
+
+This places the document under "Reference" regardless of its file location.
+
+## Tips
+
+- Use `index.md` for section landing pages (they become group parents)
+- Keep directory names meaningful — they don't directly map to titles, but help organize your source
+- The title always comes from the file content, not the directory name
+
+---
+
+## Installation
+
+# Installation
+
+## Binary Download (Recommended)
+
+Download the latest release for your platform from [GitHub Releases](https://github.com/Breee/outline-cli/releases/latest).
+
+### Linux / macOS
+
+```bash
+OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+ARCH=$(uname -m)
+case "$ARCH" in
+  x86_64) ARCH=amd64 ;;
+  aarch64|arm64) ARCH=arm64 ;;
+  armv7l) ARCH=armv7 ;;
+esac
+curl -sL "https://github.com/Breee/outline-cli/releases/latest/download/outline_${OS}_${ARCH}.tar.gz" | sudo tar xz -C /usr/local/bin outline
+```
+
+### Windows
+
+Download `outline_windows_amd64.zip` from the [releases page](https://github.com/Breee/outline-cli/releases/latest) and add `outline.exe` to your PATH.
+
+## Go Install
+
+```bash
+go install github.com/Breee/outline-cli@latest
+```
+
+## Build from Source
+
+```bash
+git clone https://github.com/Breee/outline-cli.git
+cd outline-cli
+make build
+# Binary at ./outline
+```
+
+## Shell Completions
+
+```bash
+# Bash
+outline completion bash > /etc/bash_completion.d/outline
+
+# Zsh
+outline completion zsh > "${fpath[1]}/_outline"
+
+# Fish
+outline completion fish > ~/.config/fish/completions/outline.fish
+```
+
+## Verify Installation
+
+```bash
+outline --help
+```
+
+---
+
+## Metadata Headers
+
+# Metadata Headers
+
+Control per-file behavior using HTML comments at the top of your markdown files.
+
+## Format
+
+```markdown
+<!-- Collection: Engineering -->
+<!-- Title: Deployment Guide -->
+<!-- Icon: 🚀 -->
+<!-- Parent: Operations Runbooks -->
+
+# Deployment Guide
+
+Your content here...
+```
+
+## Supported Headers
+
+| Header | Description | Example |
+|--------|-------------|---------|
+| `Collection` | Target collection (overrides `--collection-id`) | `<!-- Collection: Engineering -->` |
+| `Title` | Explicit document title | `<!-- Title: Getting Started -->` |
+| `Icon` | Document icon in Outline UI | `<!-- Icon: 🚀 -->` |
+| `Parent` | Parent document for nesting | `<!-- Parent: User Guide -->` |
+
+## Title Resolution
+
+The document title is determined in this order:
+
+1. `<!-- Title: ... -->` header (if present)
+2. First `# H1` heading in the file
+3. Filename without extension (e.g., `deploy-guide.md` → `deploy-guide`)
+
+## Collection Override
+
+Each file can target a different collection, useful for mixed-content directories:
+
+```markdown
+<!-- Collection: Operations -->
+# Runbook: Database Failover
+...
+```
+
+```markdown
+<!-- Collection: Engineering -->
+# Architecture Decision: Event Sourcing
+...
+```
+
+## Parent Documents
+
+Explicit parent assignment for nesting:
+
+```markdown
+<!-- Parent: User Guide -->
+<!-- Title: Installation -->
+
+# Installation
+...
+```
+
+This creates `Installation` as a child of `User Guide` in the Outline tree.
+
+!!! note
+    The parent document must already exist (or be pushed in the same batch). See [Directory Structure](directories.md) for automatic parent resolution.
+
+## Icons
+
+Use emoji or Outline-supported icon names:
+
+```markdown
+<!-- Icon: 🚀 -->
+<!-- Icon: 📝 -->
+<!-- Icon: ⚙️ -->
+```
+
+---
+
+## Pushing Documents
+
+# Pushing Documents
+
+The `push` command uploads markdown files to your Outline wiki.
+
+## Basic Usage
+
+```bash
+# Push a single file
+outline push --path ./deploy.md --collection-id "Engineering"
+
+# Push a directory tree
+outline push --path ./docs/ --collection-id "Engineering"
+
+# Auto-create collection if it doesn't exist
+outline push --path ./docs/ --collection-id "New Collection" --create-collection
+```
+
+## Flags
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `-p, --path` | `.` | Path to markdown file or directory |
+| `--collection-id` | — | Target collection (name, slug, or UUID) |
+| `--publish` | `true` | Publish created documents |
+| `--create-collection` | `false` | Create collection if it doesn't exist |
+
+## Upsert Behavior
+
+`push` is idempotent. It searches for an existing document by title:
+
+- **Found** → updates the content
+- **Not found** → creates a new document
+
+This means you can run `push` repeatedly (e.g., in CI) without creating duplicates.
+
+## Collection Resolution
+
+The `--collection-id` flag accepts:
+
+- Collection name: `"Engineering"`
+- Collection slug: `engineering`
+- URL ID: `engineering-abc123`
+- UUID: `550e8400-e29b-41d4-a716-446655440000`
+
+## Image Upload
+
+Local image references are automatically uploaded:
+
+```markdown
+![architecture diagram](./images/arch.png)
+```
+
+Becomes an Outline attachment with the URL rewritten in the pushed document.
+
+## What Gets Pushed
+
+When pushing a directory:
+
+- All `.md` files are included (recursive)
+- Non-markdown files are ignored (except images referenced in markdown)
+- Hidden files/directories (`.git`, `.DS_Store`) are skipped
+- Sort order: shallower files first, then `index.md`/`README.md` first, then alphabetical
+
+---
+
+## Quick Start
+
+# Quick Start
+
+Push your first document to Outline in under 2 minutes.
+
+## Prerequisites
+
+- An Outline instance (self-hosted or cloud)
+- An API token (Settings → API in Outline)
+
+## 1. Configure credentials
+
+```bash
+export OUTLINE_HOST=https://outline.example.com
+export OUTLINE_API_TOKEN=sk-your-api-token
+```
+
+!!! tip "For persistent config"
+    ```bash
+    outline config set server_url https://outline.example.com
+    outline config set api_token sk-your-api-token  # stored in OS keyring
+    ```
+
+## 2. Push a single file
+
+```bash
+echo '# Hello World
+This is my first doc pushed from the terminal.' > hello.md
+
+outline push --collection-id "Engineering" --path hello.md
+```
+
+Output:
+```
+created "Hello World" in collection "Engineering"
+```
+
+## 3. Push a directory
+
+```bash
+outline push --collection-id "Engineering" --path ./docs/
+```
+
+All `.md` files are pushed. `index.md` and `README.md` become parent documents. Subdirectories become nested children.
+
+## 4. Verify
+
+Check your Outline instance — the documents are live!
+
+## What's next?
+
+- [Authentication options](auth.md) — OIDC, API token, or basic auth
+- [Metadata headers](metadata.md) — control title, collection, icon per file
+- [CI/CD integration](cicd.md) — automate on every git push
+
+---
+
+## outline-cli
+
+# outline-cli
+
+The best wiki CLI: push, pull, search, and read [Outline](https://github.com/outline/outline) wiki documents from your terminal.
+
+## Why outline-cli?
+
+- **Stay in your terminal** — no context switching to a browser
+- **Docs-as-code** — version control your wiki content in git
+- **CI/CD native** — publish docs automatically on every merge
+- **Secure by default** — credentials stored in OS keyring (OWASP-aligned)
+
+## Quick Start
+
+```bash
+# Install
+curl -sL "https://github.com/Breee/outline-cli/releases/latest/download/outline_linux_amd64.tar.gz" | sudo tar xz -C /usr/local/bin outline
+
+# Authenticate
+export OUTLINE_HOST=https://outline.example.com
+export OUTLINE_API_TOKEN=sk-your-token
+
+# Push docs
+outline push --collection-id "Engineering" --path ./docs/
+```
+
+## Features
+
+| Feature | Description |
+|---------|-------------|
+| **Push** | Push markdown files or directory trees to Outline |
+| **Upsert** | Updates existing docs by title, creates if not found |
+| **Metadata** | Per-file collection, title, icon, parent via HTML comments |
+| **Images** | Auto-upload local images as attachments |
+| **OIDC** | Browser login with PKCE + Dynamic Client Registration |
+| **Keyring** | All credentials in OS keyring (API token, password, OIDC) |
+| **Config** | YAML config with `config set/get/list` commands |
+| **CI/CD** | Works with env vars only — no config file needed |
+
+## AI Integration
+
+This documentation is optimized for AI consumption:
+
+- [`llms.txt`](/llms.txt) — structured index for LLM discovery
+- [`llms-full.txt`](/llms-full.txt) — complete documentation as single file
+- Every page has `llmsDescription` frontmatter for precise AI context
+
+## Next Steps
+
+- [Installation](guide/install.md) — download and set up
+- [Quick Start](guide/quickstart.md) — first push in 2 minutes
+- [CI/CD Integration](guide/cicd.md) — automate doc publishing
+
+---
+
+## CLI Command Reference
+
+# CLI Command Reference
+
+## Global Flags
+
+These flags apply to all commands:
+
+| Flag | Env Var | Description |
+|------|---------|-------------|
+| `--config` | — | Config file path (default `~/.outline-cli/config.yaml`) |
+| `--server-url` | `OUTLINE_SERVER_URL`, `OUTLINE_HOST` | Outline server URL |
+| `--api-token` | `OUTLINE_API_TOKEN` | API token |
+| `--username` | `OUTLINE_USERNAME` | Basic auth username |
+| `--password` | `OUTLINE_PASSWORD` | Basic auth password |
+| `--oidc-access-token` | `OUTLINE_OIDC_ACCESS_TOKEN` | OIDC access token |
+
+---
+
+## `outline push`
+
+Push markdown files to an Outline collection.
+
+```bash
+outline push --path ./docs/ --collection-id "Engineering"
+```
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `-p, --path` | `.` | Markdown file or directory to push |
+| `--collection-id` | — | Target collection (name, slug, or UUID) |
+| `--publish` | `true` | Publish created documents |
+| `--create-collection` | `false` | Create collection if it doesn't exist |
+
+---
+
+## `outline auth oidc-login`
+
+Authenticate via browser-based OIDC flow.
+
+```bash
+outline auth oidc-login
+```
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--port` | `10800` | Local port for OAuth callback server |
+
+---
+
+## `outline auth check`
+
+Verify stored credentials are valid.
+
+```bash
+outline auth check
+```
+
+Prints: authenticated user name, email, and team. Exit code 1 if not authenticated.
+
+---
+
+## `outline config set`
+
+Set a configuration value.
+
+```bash
+outline config set <key> <value>
+```
+
+Secret keys (`api_token`, `password`) are stored in the OS keyring.
+
+---
+
+## `outline config get`
+
+Print a configuration value.
+
+```bash
+outline config get <key>
+```
+
+---
+
+## `outline config list`
+
+List all set configuration values. Secrets are masked as `***`.
+
+```bash
+outline config list
+```
+
+---
+
+## `outline config path`
+
+Print the config file path.
+
+```bash
+outline config path
+```
+
+---
+
+## `outline completion`
+
+Generate shell completion scripts.
+
+```bash
+outline completion bash
+outline completion zsh
+outline completion fish
+```
+
+---
+
+## Config File Reference
+
+# Config File Reference
+
+Config file location: `~/.outline-cli/config.yaml`
+
+## Format
+
+```yaml
+server_url: https://outline.example.com
+auth_method: oidc
+token_storage: keyring
+oidc_port: 10800
+```
+
+## Fields
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `server_url` | string | — | Outline server URL |
+| `auth_method` | string | `oidc` | Auto-auth method (`oidc`, `api-token`, `basic`) |
+| `token_storage` | string | `keyring` | Where to store secrets (`keyring`, `file`) |
+| `oidc_port` | int | `10800` | Local port for OIDC callback |
+| `oidc_access_token` | string | — | OIDC token (only if `token_storage=file`) |
+| `api_token` | string | — | API token (only if `token_storage=file`) |
+| `password` | string | — | Basic auth password (only if `token_storage=file`) |
+
+## File Permissions
+
+The config file is always written with `0600` permissions (owner read/write only).
+
+## Keyring Storage
+
+When `token_storage=keyring` (default), secrets are stored in the OS keyring:
+
+| Keyring Service | Keyring User | Credential |
+|-----------------|--------------|------------|
+| `outline-cli` | `oidc_access_token` | OIDC token |
+| `outline-cli` | `api_token` | API token |
+| `outline-cli` | `basic_password` | Basic auth password |
+
+The config file only stores non-secret values in this mode.
+
+## File Storage (Headless)
+
+For environments without a keyring (CI, containers, SSH sessions):
+
+```bash
+outline config set token_storage file
+```
+
+Secrets are then written to the YAML file in plaintext. Ensure the file is not committed to git.
+
+---
+
+## Environment Variables
+
+# Environment Variables
+
+All environment variables recognized by outline-cli.
+
+## Authentication
+
+| Variable | Description |
+|----------|-------------|
+| `OUTLINE_API_TOKEN` | API token for Outline |
+| `OUTLINE_USERNAME` | Basic auth username |
+| `OUTLINE_PASSWORD` | Basic auth password |
+| `OUTLINE_OIDC_ACCESS_TOKEN` | OIDC access token (set automatically by `auth oidc-login`) |
+
+## Server
+
+| Variable | Description |
+|----------|-------------|
+| `OUTLINE_HOST` | Outline server URL (preferred in CI/CD) |
+| `OUTLINE_SERVER_URL` | Outline server URL (alternative) |
+
+!!! note
+    If both `OUTLINE_HOST` and `OUTLINE_SERVER_URL` are set, `OUTLINE_SERVER_URL` takes priority (it maps directly to the `--server-url` flag).
+
+## Behavior
+
+| Variable | Description |
+|----------|-------------|
+| `OUTLINE_AUTH_METHOD` | Auto-auth method: `oidc`, `api-token`, or `basic` |
+
+## Priority
+
+```
+CLI flags > Environment variables > OS keyring > Config file
+```
+
+## CI/CD Minimal Setup
+
+Only two variables are needed for CI:
+
+```bash
+export OUTLINE_HOST=https://outline.example.com
+export OUTLINE_API_TOKEN=sk-your-token
+outline push --collection-id "Docs" --path ./docs/
+```
+
+---
+
+## outline
+
+## outline
+
+Push markdown documents to Outline
+
+### Synopsis
+
+A modern CLI for pushing markdown files to an Outline wiki.
+
+### Options
+
+```
+      --api-token string           Outline API token
+      --config string              config file (default "/home/bree/.outline-cli/config.yaml")
+  -h, --help                       help for outline
+      --oidc-access-token string   OIDC access token
+      --password string            Basic auth password
+      --server-url string          Outline server URL
+      --username string            Basic auth username
+```
+
+### SEE ALSO
+
+* [outline auth](outline_auth.md)	 - Authentication helpers
+* [outline completion](outline_completion.md)	 - Generate the autocompletion script for the specified shell
+* [outline config](outline_config.md)	 - Manage CLI configuration
+* [outline push](outline_push.md)	 - Push markdown files to Outline
+
+---
+
+## outline auth
+
+## outline auth
+
+Authentication helpers
+
+### Options
+
+```
+  -h, --help   help for auth
+```
+
+### Options inherited from parent commands
+
+```
+      --api-token string           Outline API token
+      --config string              config file (default "/home/bree/.outline-cli/config.yaml")
+      --oidc-access-token string   OIDC access token
+      --password string            Basic auth password
+      --server-url string          Outline server URL
+      --username string            Basic auth username
+```
+
+### SEE ALSO
+
+* [outline](outline.md)	 - Push markdown documents to Outline
+* [outline auth check](outline_auth_check.md)	 - Verify that the stored credentials are valid
+* [outline auth oidc-login](outline_auth_oidc-login.md)	 - Login via browser-based OIDC flow through Outline
+
+---
+
+## outline auth check
+
+## outline auth check
+
+Verify that the stored credentials are valid
+
+```
+outline auth check [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for check
+```
+
+### Options inherited from parent commands
+
+```
+      --api-token string           Outline API token
+      --config string              config file (default "/home/bree/.outline-cli/config.yaml")
+      --oidc-access-token string   OIDC access token
+      --password string            Basic auth password
+      --server-url string          Outline server URL
+      --username string            Basic auth username
+```
+
+### SEE ALSO
+
+* [outline auth](outline_auth.md)	 - Authentication helpers
+
+---
+
+## outline auth oidc-login
+
+## outline auth oidc-login
+
+Login via browser-based OIDC flow through Outline
+
+### Synopsis
+
+Initiates Outline's OIDC login flow in your browser.
+A local HTTP server captures the callback and obtains an Outline session token.
+Requires --server-url to be set (the Outline instance URL).
+
+```
+outline auth oidc-login [flags]
+```
+
+### Options
+
+```
+  -h, --help       help for oidc-login
+      --port int   Local port for OIDC callback server (default 10800)
+```
+
+### Options inherited from parent commands
+
+```
+      --api-token string           Outline API token
+      --config string              config file (default "/home/bree/.outline-cli/config.yaml")
+      --oidc-access-token string   OIDC access token
+      --password string            Basic auth password
+      --server-url string          Outline server URL
+      --username string            Basic auth username
+```
+
+### SEE ALSO
+
+* [outline auth](outline_auth.md)	 - Authentication helpers
+
+---
+
+## outline completion
+
+## outline completion
+
+Generate the autocompletion script for the specified shell
+
+### Synopsis
+
+Generate the autocompletion script for outline for the specified shell.
+See each sub-command's help for details on how to use the generated script.
+
+
+### Options
+
+```
+  -h, --help   help for completion
+```
+
+### Options inherited from parent commands
+
+```
+      --api-token string           Outline API token
+      --config string              config file (default "/home/bree/.outline-cli/config.yaml")
+      --oidc-access-token string   OIDC access token
+      --password string            Basic auth password
+      --server-url string          Outline server URL
+      --username string            Basic auth username
+```
+
+### SEE ALSO
+
+* [outline](outline.md)	 - Push markdown documents to Outline
+* [outline completion bash](outline_completion_bash.md)	 - Generate the autocompletion script for bash
+* [outline completion fish](outline_completion_fish.md)	 - Generate the autocompletion script for fish
+* [outline completion powershell](outline_completion_powershell.md)	 - Generate the autocompletion script for powershell
+* [outline completion zsh](outline_completion_zsh.md)	 - Generate the autocompletion script for zsh
+
+---
+
+## outline completion bash
+
+## outline completion bash
+
+Generate the autocompletion script for bash
+
+### Synopsis
+
+Generate the autocompletion script for the bash shell.
+
+This script depends on the 'bash-completion' package.
+If it is not installed already, you can install it via your OS's package manager.
+
+To load completions in your current shell session:
+
+	source <(outline completion bash)
+
+To load completions for every new session, execute once:
+
+#### Linux:
+
+	outline completion bash > /etc/bash_completion.d/outline
+
+#### macOS:
+
+	outline completion bash > $(brew --prefix)/etc/bash_completion.d/outline
+
+You will need to start a new shell for this setup to take effect.
+
+
+```
+outline completion bash
+```
+
+### Options
+
+```
+  -h, --help              help for bash
+      --no-descriptions   disable completion descriptions
+```
+
+### Options inherited from parent commands
+
+```
+      --api-token string           Outline API token
+      --config string              config file (default "/home/bree/.outline-cli/config.yaml")
+      --oidc-access-token string   OIDC access token
+      --password string            Basic auth password
+      --server-url string          Outline server URL
+      --username string            Basic auth username
+```
+
+### SEE ALSO
+
+* [outline completion](outline_completion.md)	 - Generate the autocompletion script for the specified shell
+
+---
+
+## outline completion fish
+
+## outline completion fish
+
+Generate the autocompletion script for fish
+
+### Synopsis
+
+Generate the autocompletion script for the fish shell.
+
+To load completions in your current shell session:
+
+	outline completion fish | source
+
+To load completions for every new session, execute once:
+
+	outline completion fish > ~/.config/fish/completions/outline.fish
+
+You will need to start a new shell for this setup to take effect.
+
+
+```
+outline completion fish [flags]
+```
+
+### Options
+
+```
+  -h, --help              help for fish
+      --no-descriptions   disable completion descriptions
+```
+
+### Options inherited from parent commands
+
+```
+      --api-token string           Outline API token
+      --config string              config file (default "/home/bree/.outline-cli/config.yaml")
+      --oidc-access-token string   OIDC access token
+      --password string            Basic auth password
+      --server-url string          Outline server URL
+      --username string            Basic auth username
+```
+
+### SEE ALSO
+
+* [outline completion](outline_completion.md)	 - Generate the autocompletion script for the specified shell
+
+---
+
+## outline completion powershell
+
+## outline completion powershell
+
+Generate the autocompletion script for powershell
+
+### Synopsis
+
+Generate the autocompletion script for powershell.
+
+To load completions in your current shell session:
+
+	outline completion powershell | Out-String | Invoke-Expression
+
+To load completions for every new session, add the output of the above command
+to your powershell profile.
+
+
+```
+outline completion powershell [flags]
+```
+
+### Options
+
+```
+  -h, --help              help for powershell
+      --no-descriptions   disable completion descriptions
+```
+
+### Options inherited from parent commands
+
+```
+      --api-token string           Outline API token
+      --config string              config file (default "/home/bree/.outline-cli/config.yaml")
+      --oidc-access-token string   OIDC access token
+      --password string            Basic auth password
+      --server-url string          Outline server URL
+      --username string            Basic auth username
+```
+
+### SEE ALSO
+
+* [outline completion](outline_completion.md)	 - Generate the autocompletion script for the specified shell
+
+---
+
+## outline completion zsh
+
+## outline completion zsh
+
+Generate the autocompletion script for zsh
+
+### Synopsis
+
+Generate the autocompletion script for the zsh shell.
+
+If shell completion is not already enabled in your environment you will need
+to enable it.  You can execute the following once:
+
+	echo "autoload -U compinit; compinit" >> ~/.zshrc
+
+To load completions in your current shell session:
+
+	source <(outline completion zsh)
+
+To load completions for every new session, execute once:
+
+#### Linux:
+
+	outline completion zsh > "${fpath[1]}/_outline"
+
+#### macOS:
+
+	outline completion zsh > $(brew --prefix)/share/zsh/site-functions/_outline
+
+You will need to start a new shell for this setup to take effect.
+
+
+```
+outline completion zsh [flags]
+```
+
+### Options
+
+```
+  -h, --help              help for zsh
+      --no-descriptions   disable completion descriptions
+```
+
+### Options inherited from parent commands
+
+```
+      --api-token string           Outline API token
+      --config string              config file (default "/home/bree/.outline-cli/config.yaml")
+      --oidc-access-token string   OIDC access token
+      --password string            Basic auth password
+      --server-url string          Outline server URL
+      --username string            Basic auth username
+```
+
+### SEE ALSO
+
+* [outline completion](outline_completion.md)	 - Generate the autocompletion script for the specified shell
+
+---
+
+## outline config
+
+## outline config
+
+Manage CLI configuration
+
+### Synopsis
+
+Get, set, or list configuration values stored in /home/bree/.outline-cli/config.yaml
+
+### Options
+
+```
+  -h, --help   help for config
+```
+
+### Options inherited from parent commands
+
+```
+      --api-token string           Outline API token
+      --config string              config file (default "/home/bree/.outline-cli/config.yaml")
+      --oidc-access-token string   OIDC access token
+      --password string            Basic auth password
+      --server-url string          Outline server URL
+      --username string            Basic auth username
+```
+
+### SEE ALSO
+
+* [outline](outline.md)	 - Push markdown documents to Outline
+* [outline config get](outline_config_get.md)	 - Print the value of a config key
+* [outline config list](outline_config_list.md)	 - List all config values
+* [outline config path](outline_config_path.md)	 - Print the config file path
+* [outline config set](outline_config_set.md)	 - Set a config key to a value
+
+---
+
+## outline config get
+
+## outline config get
+
+Print the value of a config key
+
+```
+outline config get <key> [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for get
+```
+
+### Options inherited from parent commands
+
+```
+      --api-token string           Outline API token
+      --config string              config file (default "/home/bree/.outline-cli/config.yaml")
+      --oidc-access-token string   OIDC access token
+      --password string            Basic auth password
+      --server-url string          Outline server URL
+      --username string            Basic auth username
+```
+
+### SEE ALSO
+
+* [outline config](outline_config.md)	 - Manage CLI configuration
+
+---
+
+## outline config list
+
+## outline config list
+
+List all config values
+
+```
+outline config list [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for list
+```
+
+### Options inherited from parent commands
+
+```
+      --api-token string           Outline API token
+      --config string              config file (default "/home/bree/.outline-cli/config.yaml")
+      --oidc-access-token string   OIDC access token
+      --password string            Basic auth password
+      --server-url string          Outline server URL
+      --username string            Basic auth username
+```
+
+### SEE ALSO
+
+* [outline config](outline_config.md)	 - Manage CLI configuration
+
+---
+
+## outline config path
+
+## outline config path
+
+Print the config file path
+
+```
+outline config path [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for path
+```
+
+### Options inherited from parent commands
+
+```
+      --api-token string           Outline API token
+      --config string              config file (default "/home/bree/.outline-cli/config.yaml")
+      --oidc-access-token string   OIDC access token
+      --password string            Basic auth password
+      --server-url string          Outline server URL
+      --username string            Basic auth username
+```
+
+### SEE ALSO
+
+* [outline config](outline_config.md)	 - Manage CLI configuration
+
+---
+
+## outline config set
+
+## outline config set
+
+Set a config key to a value
+
+### Synopsis
+
+Set a config key to a value.
+
+Available keys:
+  server_url
+  auth_method
+  token_storage
+  oidc_port
+  api_token
+  password
+
+```
+outline config set <key> <value> [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for set
+```
+
+### Options inherited from parent commands
+
+```
+      --api-token string           Outline API token
+      --config string              config file (default "/home/bree/.outline-cli/config.yaml")
+      --oidc-access-token string   OIDC access token
+      --password string            Basic auth password
+      --server-url string          Outline server URL
+      --username string            Basic auth username
+```
+
+### SEE ALSO
+
+* [outline config](outline_config.md)	 - Manage CLI configuration
+
+---
+
+## outline push
+
+## outline push
+
+Push markdown files to Outline
+
+```
+outline push [flags]
+```
+
+### Options
+
+```
+      --collection-id string   Default Outline collection (name, slug, or UUID)
+      --create-collection      Create collection if it does not exist
+  -h, --help                   help for push
+  -p, --path string            Path to markdown file or directory (default ".")
+      --publish                Publish created documents (default true)
+```
+
+### Options inherited from parent commands
+
+```
+      --api-token string           Outline API token
+      --config string              config file (default "/home/bree/.outline-cli/config.yaml")
+      --oidc-access-token string   OIDC access token
+      --password string            Basic auth password
+      --server-url string          Outline server URL
+      --username string            Basic auth username
+```
+
+### SEE ALSO
+
+* [outline](outline.md)	 - Push markdown documents to Outline
+
+---
+
