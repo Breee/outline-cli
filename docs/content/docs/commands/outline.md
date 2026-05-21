@@ -30,7 +30,9 @@ A modern CLI for pushing markdown files to an Outline wiki.
 * [outline auth](outline_auth.md)	 - Authentication helpers
 * [outline completion](outline_completion.md)	 - Generate the autocompletion script for the specified shell
 * [outline config](outline_config.md)	 - Manage CLI configuration
+* [outline get](outline_get.md)	 - Get resources from Outline (kubectl-style)
 * [outline pull](outline_pull.md)	 - Pull documents from Outline to local markdown files
 * [outline push](outline_push.md)	 - Push markdown files to Outline
 * [outline search](outline_search.md)	 - Search documents in Outline
+* [outline tui](outline_tui.md)	 - Interactive TUI for browsing and reading wiki documents
 

@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/Breee/outline-cli/internal/outline"
+	udiff "github.com/aymanbagabas/go-udiff"
 	"github.com/spf13/cobra"
 )
 
@@ -541,8 +542,8 @@ func confirmPush(ctx context.Context, cmd *cobra.Command, client *outline.Client
 	if pushDiff {
 		for _, c := range changes {
 			if c.action == "update" {
-				cmd.PrintErrf("\n--- remote: %s\n+++ local:  %s\n", c.title, c.file)
-				printSimpleDiff(cmd, c.remoteBody, c.localBody)
+				cmd.PrintErrf("\n")
+				printUnifiedDiff(cmd, c.title, c.file, c.remoteBody, c.localBody)
 			}
 		}
 	}
@@ -562,29 +563,24 @@ func titleForFile(file, body string, meta docMetadata) string {
 	return documentTitle(file, body)
 }
 
-// printSimpleDiff prints a basic line-level diff between two strings.
-func printSimpleDiff(cmd *cobra.Command, remote, local string) {
-	remoteLines := strings.Split(remote, "\n")
-	localLines := strings.Split(local, "\n")
-
-	// Simple: show lines unique to each side (not a full unified diff, but useful).
-	remoteSet := make(map[string]bool, len(remoteLines))
-	for _, l := range remoteLines {
-		remoteSet[l] = true
+// printUnifiedDiff prints a colored unified diff between remote and local content.
+func printUnifiedDiff(cmd *cobra.Command, title, file, remote, local string) {
+	diff := udiff.Unified("remote: "+title, "local: "+file, remote+"\n", local+"\n")
+	if diff == "" {
+		return
 	}
-	localSet := make(map[string]bool, len(localLines))
-	for _, l := range localLines {
-		localSet[l] = true
-	}
-
-	for _, l := range remoteLines {
-		if !localSet[l] {
-			cmd.PrintErrf("- %s\n", l)
-		}
-	}
-	for _, l := range localLines {
-		if !remoteSet[l] {
-			cmd.PrintErrf("+ %s\n", l)
+	for _, line := range strings.Split(diff, "\n") {
+		switch {
+		case strings.HasPrefix(line, "---"), strings.HasPrefix(line, "+++"):
+			cmd.PrintErrf("\033[1m%s\033[0m\n", line)
+		case strings.HasPrefix(line, "@@"):
+			cmd.PrintErrf("\033[36m%s\033[0m\n", line)
+		case strings.HasPrefix(line, "+"):
+			cmd.PrintErrf("\033[32m%s\033[0m\n", line)
+		case strings.HasPrefix(line, "-"):
+			cmd.PrintErrf("\033[31m%s\033[0m\n", line)
+		default:
+			cmd.PrintErrf("%s\n", line)
 		}
 	}
 }

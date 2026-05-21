@@ -262,6 +262,44 @@ func (c *Client) ListDocuments(ctx context.Context, collectionID string) ([]Docu
 	return allDocs, nil
 }
 
+// ListAllDocuments lists documents, optionally filtered by collection.
+// If collectionID is empty, lists documents across all collections.
+func (c *Client) ListAllDocuments(ctx context.Context, collectionID string) ([]Document, error) {
+	var allDocs []Document
+	offset := 0
+	limit := 100
+
+	for {
+		payload := map[string]any{
+			"limit":  limit,
+			"offset": offset,
+		}
+		if collectionID != "" {
+			payload["collectionId"] = collectionID
+		}
+
+		var response struct {
+			OK   bool       `json:"ok"`
+			Data []Document `json:"data"`
+			Err  string     `json:"error"`
+		}
+
+		if err := c.post(ctx, "/api/documents.list", payload, &response); err != nil {
+			return nil, err
+		}
+		if !response.OK {
+			return nil, errors.New(response.Err)
+		}
+		allDocs = append(allDocs, response.Data...)
+		if len(response.Data) < limit {
+			break
+		}
+		offset += limit
+	}
+
+	return allDocs, nil
+}
+
 // GetDocument retrieves a single document by ID.
 func (c *Client) GetDocument(ctx context.Context, id string) (Document, error) {
 	var response struct {
