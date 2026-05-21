@@ -34,9 +34,7 @@ make help         # show this help
 - Metadata headers in markdown: `<!-- Collection: X -->`, `<!-- Title: X -->`, `<!-- Parent: X -->`
 - Directory structure maps to document hierarchy (index.md = parent)
 - TUI uses bubbletea v2 Elm architecture: Model.Init/Update/View
-- TUI state machine: ViewBrowser → ViewReader, ViewBrowser → ViewSearch → ViewReader
-- Live search with debounce (300ms tick + incrementing ID pattern)
-- Glamour v2 renders markdown in TUI reader and `outline get documents <title>`
+- Glamour v2 renders markdown in TUI and `get documents <title>`
 
 ## Configuration
 

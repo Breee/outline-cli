@@ -357,9 +357,11 @@ A modern CLI for pushing markdown files to an Outline wiki.
 * [outline auth](outline_auth.md)	 - Authentication helpers
 * [outline completion](outline_completion.md)	 - Generate the autocompletion script for the specified shell
 * [outline config](outline_config.md)	 - Manage CLI configuration
+* [outline get](outline_get.md)	 - Get resources from Outline (kubectl-style)
 * [outline pull](outline_pull.md)	 - Pull documents from Outline to local markdown files
 * [outline push](outline_push.md)	 - Push markdown files to Outline
 * [outline search](outline_search.md)	 - Search documents in Outline
+* [outline tui](outline_tui.md)	 - Interactive TUI for browsing and reading wiki documents
 
 ---
 
@@ -944,6 +946,139 @@ outline config set <key> <value> [flags]
 
 ---
 
+## outline get
+
+## outline get
+
+Get resources from Outline (kubectl-style)
+
+### Synopsis
+
+Retrieve and display resources from Outline in various output formats.
+
+### Options
+
+```
+  -h, --help   help for get
+```
+
+### Options inherited from parent commands
+
+```
+      --api-token string           Outline API token
+      --config string              config file (default "$HOME/.outline-cli/config.yaml")
+      --oidc-access-token string   OIDC access token
+      --password string            Basic auth password
+      --server-url string          Outline server URL
+      --username string            Basic auth username
+```
+
+### SEE ALSO
+
+* [outline](outline.md)	 - Push markdown documents to Outline
+* [outline get collections](outline_get_collections.md)	 - List all collections
+* [outline get documents](outline_get_documents.md)	 - List or get documents
+
+---
+
+## outline get collections
+
+## outline get collections
+
+List all collections
+
+```
+outline get collections [flags]
+```
+
+### Examples
+
+```
+  # List collections (default table)
+  outline get collections
+
+  # JSON output
+  outline get collections -o json
+
+  # YAML output
+  outline get collections -o yaml
+```
+
+### Options
+
+```
+  -h, --help            help for collections
+  -o, --output string   Output format: table, json, yaml (default "table")
+```
+
+### Options inherited from parent commands
+
+```
+      --api-token string           Outline API token
+      --config string              config file (default "$HOME/.outline-cli/config.yaml")
+      --oidc-access-token string   OIDC access token
+      --password string            Basic auth password
+      --server-url string          Outline server URL
+      --username string            Basic auth username
+```
+
+### SEE ALSO
+
+* [outline get](outline_get.md)	 - Get resources from Outline (kubectl-style)
+
+---
+
+## outline get documents
+
+## outline get documents
+
+List or get documents
+
+```
+outline get documents [flags]
+```
+
+### Examples
+
+```
+  # List documents in a collection
+  outline get documents --collection test
+
+  # Get a specific document by title (markdown output)
+  outline get documents "Deployment Guide" -o md
+
+  # Get by title, JSON output
+  outline get documents "API Reference" -o json
+
+  # YAML metadata
+  outline get documents "FAQ" -o yaml
+```
+
+### Options
+
+```
+      --collection string   Filter by collection (name, slug, or UUID)
+  -h, --help                help for documents
+  -o, --output string       Output format: table, json, yaml, md, raw (default "table")
+```
+
+### Options inherited from parent commands
+
+```
+      --api-token string           Outline API token
+      --config string              config file (default "$HOME/.outline-cli/config.yaml")
+      --oidc-access-token string   OIDC access token
+      --password string            Basic auth password
+      --server-url string          Outline server URL
+      --username string            Basic auth username
+```
+
+### SEE ALSO
+
+* [outline get](outline_get.md)	 - Get resources from Outline (kubectl-style)
+
+---
+
 ## outline pull
 
 ## outline pull
@@ -1082,6 +1217,59 @@ outline search <query> [flags]
       --format string       Output format: default, json, oneline (default "default")
   -h, --help                help for search
       --limit int           Maximum number of results (default 25)
+```
+
+### Options inherited from parent commands
+
+```
+      --api-token string           Outline API token
+      --config string              config file (default "$HOME/.outline-cli/config.yaml")
+      --oidc-access-token string   OIDC access token
+      --password string            Basic auth password
+      --server-url string          Outline server URL
+      --username string            Basic auth username
+```
+
+### SEE ALSO
+
+* [outline](outline.md)	 - Push markdown documents to Outline
+
+---
+
+## outline tui
+
+## outline tui
+
+Interactive TUI for browsing and reading wiki documents
+
+### Synopsis
+
+Launch an interactive terminal UI for browsing collections and reading
+documents from Outline. Optionally pass a search query to jump directly
+to search results.
+
+```
+outline tui [query] [flags]
+```
+
+### Examples
+
+```
+  # Open collection browser
+  outline tui
+
+  # Jump to search results
+  outline tui "deploy guide"
+
+  # Browse a specific collection
+  outline tui --collection ops
+```
+
+### Options
+
+```
+      --collection string   Browse a specific collection
+  -h, --help                help for tui
 ```
 
 ### Options inherited from parent commands
