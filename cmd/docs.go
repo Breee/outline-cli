@@ -71,6 +71,8 @@ func generateCLIReference() error {
 	}
 
 	rootCmd.DisableAutoGenTag = true
+	// Use stable default so generated docs don't vary by environment
+	rootCmd.PersistentFlags().Lookup("config").DefValue = "$HOME/.outline-cli/config.yaml"
 	if err := doc.GenMarkdownTree(rootCmd, docsOutputDir); err != nil {
 		return fmt.Errorf("generating docs: %w", err)
 	}
