@@ -17,7 +17,7 @@ A modern CLI for pushing markdown files to an Outline wiki.
 
 ```
       --api-token string           Outline API token
-      --config string              config file (default "/home/bree/.outline-cli/config.yaml")
+      --config string              config file (default "$HOME/.outline-cli/config.yaml")
   -h, --help                       help for outline
       --oidc-access-token string   OIDC access token
       --password string            Basic auth password

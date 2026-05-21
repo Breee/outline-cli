@@ -1006,7 +1006,7 @@ A modern CLI for pushing markdown files to an Outline wiki.
 
 ```
       --api-token string           Outline API token
-      --config string              config file (default "/home/bree/.outline-cli/config.yaml")
+      --config string              config file (default "$HOME/.outline-cli/config.yaml")
   -h, --help                       help for outline
       --oidc-access-token string   OIDC access token
       --password string            Basic auth password
@@ -1039,7 +1039,7 @@ Authentication helpers
 
 ```
       --api-token string           Outline API token
-      --config string              config file (default "/home/bree/.outline-cli/config.yaml")
+      --config string              config file (default "$HOME/.outline-cli/config.yaml")
       --oidc-access-token string   OIDC access token
       --password string            Basic auth password
       --server-url string          Outline server URL
@@ -1074,7 +1074,7 @@ outline auth check [flags]
 
 ```
       --api-token string           Outline API token
-      --config string              config file (default "/home/bree/.outline-cli/config.yaml")
+      --config string              config file (default "$HOME/.outline-cli/config.yaml")
       --oidc-access-token string   OIDC access token
       --password string            Basic auth password
       --server-url string          Outline server URL
@@ -1114,7 +1114,7 @@ outline auth oidc-login [flags]
 
 ```
       --api-token string           Outline API token
-      --config string              config file (default "/home/bree/.outline-cli/config.yaml")
+      --config string              config file (default "$HOME/.outline-cli/config.yaml")
       --oidc-access-token string   OIDC access token
       --password string            Basic auth password
       --server-url string          Outline server URL
@@ -1149,7 +1149,7 @@ See each sub-command's help for details on how to use the generated script.
 
 ```
       --api-token string           Outline API token
-      --config string              config file (default "/home/bree/.outline-cli/config.yaml")
+      --config string              config file (default "$HOME/.outline-cli/config.yaml")
       --oidc-access-token string   OIDC access token
       --password string            Basic auth password
       --server-url string          Outline server URL
@@ -1211,7 +1211,7 @@ outline completion bash
 
 ```
       --api-token string           Outline API token
-      --config string              config file (default "/home/bree/.outline-cli/config.yaml")
+      --config string              config file (default "$HOME/.outline-cli/config.yaml")
       --oidc-access-token string   OIDC access token
       --password string            Basic auth password
       --server-url string          Outline server URL
@@ -1260,7 +1260,7 @@ outline completion fish [flags]
 
 ```
       --api-token string           Outline API token
-      --config string              config file (default "/home/bree/.outline-cli/config.yaml")
+      --config string              config file (default "$HOME/.outline-cli/config.yaml")
       --oidc-access-token string   OIDC access token
       --password string            Basic auth password
       --server-url string          Outline server URL
@@ -1306,7 +1306,7 @@ outline completion powershell [flags]
 
 ```
       --api-token string           Outline API token
-      --config string              config file (default "/home/bree/.outline-cli/config.yaml")
+      --config string              config file (default "$HOME/.outline-cli/config.yaml")
       --oidc-access-token string   OIDC access token
       --password string            Basic auth password
       --server-url string          Outline server URL
@@ -1366,7 +1366,7 @@ outline completion zsh [flags]
 
 ```
       --api-token string           Outline API token
-      --config string              config file (default "/home/bree/.outline-cli/config.yaml")
+      --config string              config file (default "$HOME/.outline-cli/config.yaml")
       --oidc-access-token string   OIDC access token
       --password string            Basic auth password
       --server-url string          Outline server URL
@@ -1387,7 +1387,7 @@ Manage CLI configuration
 
 ### Synopsis
 
-Get, set, or list configuration values stored in /home/bree/.outline-cli/config.yaml
+Get, set, or list configuration values stored in $HOME/.outline-cli/config.yaml
 
 ### Options
 
@@ -1399,7 +1399,7 @@ Get, set, or list configuration values stored in /home/bree/.outline-cli/config.
 
 ```
       --api-token string           Outline API token
-      --config string              config file (default "/home/bree/.outline-cli/config.yaml")
+      --config string              config file (default "$HOME/.outline-cli/config.yaml")
       --oidc-access-token string   OIDC access token
       --password string            Basic auth password
       --server-url string          Outline server URL
@@ -1436,7 +1436,7 @@ outline config get <key> [flags]
 
 ```
       --api-token string           Outline API token
-      --config string              config file (default "/home/bree/.outline-cli/config.yaml")
+      --config string              config file (default "$HOME/.outline-cli/config.yaml")
       --oidc-access-token string   OIDC access token
       --password string            Basic auth password
       --server-url string          Outline server URL
@@ -1469,7 +1469,7 @@ outline config list [flags]
 
 ```
       --api-token string           Outline API token
-      --config string              config file (default "/home/bree/.outline-cli/config.yaml")
+      --config string              config file (default "$HOME/.outline-cli/config.yaml")
       --oidc-access-token string   OIDC access token
       --password string            Basic auth password
       --server-url string          Outline server URL
@@ -1502,7 +1502,7 @@ outline config path [flags]
 
 ```
       --api-token string           Outline API token
-      --config string              config file (default "/home/bree/.outline-cli/config.yaml")
+      --config string              config file (default "$HOME/.outline-cli/config.yaml")
       --oidc-access-token string   OIDC access token
       --password string            Basic auth password
       --server-url string          Outline server URL
@@ -1547,7 +1547,7 @@ outline config set <key> <value> [flags]
 
 ```
       --api-token string           Outline API token
-      --config string              config file (default "/home/bree/.outline-cli/config.yaml")
+      --config string              config file (default "$HOME/.outline-cli/config.yaml")
       --oidc-access-token string   OIDC access token
       --password string            Basic auth password
       --server-url string          Outline server URL
@@ -1584,7 +1584,7 @@ outline push [flags]
 
 ```
       --api-token string           Outline API token
-      --config string              config file (default "/home/bree/.outline-cli/config.yaml")
+      --config string              config file (default "$HOME/.outline-cli/config.yaml")
       --oidc-access-token string   OIDC access token
       --password string            Basic auth password
       --server-url string          Outline server URL

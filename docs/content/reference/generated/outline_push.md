@@ -27,7 +27,7 @@ outline push [flags]
 
 ```
       --api-token string           Outline API token
-      --config string              config file (default "/home/bree/.outline-cli/config.yaml")
+      --config string              config file (default "$HOME/.outline-cli/config.yaml")
       --oidc-access-token string   OIDC access token
       --password string            Basic auth password
       --server-url string          Outline server URL

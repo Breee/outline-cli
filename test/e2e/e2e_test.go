@@ -28,7 +28,7 @@ func TestPushMarkdownViaAPI(t *testing.T) {
 	if err != nil {
 		t.Fatalf("push command failed: %v\n%s", err, string(output))
 	}
-	if !strings.Contains(string(output), "pushed") {
+	if !strings.Contains(string(output), "created") && !strings.Contains(string(output), "updated") {
 		t.Fatalf("expected push output, got: %s", output)
 	}
 

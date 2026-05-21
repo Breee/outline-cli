@@ -71,6 +71,8 @@ func generateCLIReference() error {
 	}
 
 	rootCmd.DisableAutoGenTag = true
+	// Use stable default so generated docs don't vary by environment
+	rootCmd.PersistentFlags().Lookup("config").DefValue = "$HOME/.outline-cli/config.yaml"
 	if err := doc.GenMarkdownTree(rootCmd, docsOutputDir); err != nil {
 		return fmt.Errorf("generating docs: %w", err)
 	}
@@ -224,36 +226,25 @@ func stripFrontmatter(content string) string {
 
 func generateLLMInstructions() error {
 	instructions := buildInstructionContent()
-
-	// .github/copilot-instructions.md
-	if err := os.MkdirAll(".github", 0o755); err != nil {
-		return err
+	outputs := []string{".github/copilot-instructions.md", "CLAUDE.md", ".cursor/rules"}
+	for _, path := range outputs {
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			return err
+		}
+		if err := os.WriteFile(path, []byte(instructions), 0o644); err != nil {
+			return err
+		}
 	}
-	if err := os.WriteFile(".github/copilot-instructions.md", []byte(instructions), 0o644); err != nil {
-		return err
-	}
-
-	// CLAUDE.md
-	if err := os.WriteFile("CLAUDE.md", []byte(instructions), 0o644); err != nil {
-		return err
-	}
-
-	// .cursor/rules
-	if err := os.MkdirAll(".cursor", 0o755); err != nil {
-		return err
-	}
-	return os.WriteFile(".cursor/rules", []byte(instructions), 0o644)
+	return nil
 }
 
 func buildInstructionContent() string {
 	data := instructionData{
-		Targets:    readMakefileTargets(),
-		Packages:   discoverPackages(),
-		EnvVars:    discoverEnvVars(),
-		ConfigKeys: buildConfigKeys(),
+		Targets: readMakefileTargets(),
+		Options: config.Registry,
 	}
 
-	tmplPath := filepath.Join(docsDir, "templates", "instructions.md.tmpl")
+	tmplPath := filepath.Join(filepath.Dir(docsDir), "templates", "instructions.md.tmpl")
 	tmplContent, err := os.ReadFile(tmplPath)
 	if err != nil {
 		return fmt.Sprintf("# outline-cli\n\nError reading template %s: %v\n", tmplPath, err)
@@ -268,23 +259,8 @@ func buildInstructionContent() string {
 }
 
 type instructionData struct {
-	Targets    []makeTarget
-	Packages   []string
-	EnvVars    []string
-	ConfigKeys []configKey
-}
-
-type configKey struct {
-	Name   string
-	Secret bool
-}
-
-func buildConfigKeys() []configKey {
-	var keys []configKey
-	for _, k := range config.ValidKeys {
-		keys = append(keys, configKey{Name: k, Secret: config.SecretKeys[k]})
-	}
-	return keys
+	Targets []makeTarget
+	Options []config.Option
 }
 
 type makeTarget struct {
@@ -299,118 +275,27 @@ func readMakefileTargets() []makeTarget {
 	}
 
 	var targets []makeTarget
-	lines := strings.Split(string(content), "\n")
-	for _, line := range lines {
-		// Skip non-target lines
-		if strings.HasPrefix(line, ".") || strings.HasPrefix(line, "#") ||
-			strings.HasPrefix(line, "\t") || strings.HasPrefix(line, " ") {
-			continue
-		}
-		idx := strings.Index(line, ":")
-		if idx <= 0 {
-			continue
-		}
-		name := strings.TrimSpace(line[:idx])
-		if name == "" || strings.ContainsAny(name, "=$()") {
-			continue
-		}
-		if idx+1 < len(line) && line[idx+1] == '=' {
-			continue
-		}
-		// Skip uppercase-only names (Makefile variables like BINARY)
-		if name == strings.ToUpper(name) {
-			continue
-		}
-		targets = append(targets, makeTarget{Name: name})
-	}
-
-	// Parse help target for descriptions
-	helpSection := false
-	for _, line := range lines {
+	inHelp := false
+	for _, line := range strings.Split(string(content), "\n") {
 		if strings.Contains(line, "help:") {
-			helpSection = true
+			inHelp = true
 			continue
 		}
-		if helpSection {
+		if inHelp {
 			if !strings.HasPrefix(line, "\t") {
 				break
 			}
 			trimmed := strings.TrimSpace(line)
-			trimmed = strings.TrimPrefix(trimmed, "@echo \"")
-			trimmed = strings.TrimSuffix(trimmed, "\"")
-			trimmed = strings.TrimSpace(trimmed)
-			parts := strings.SplitN(trimmed, " - ", 2)
-			if len(parts) == 2 {
-				name := strings.TrimSpace(parts[0])
-				desc := strings.TrimSpace(parts[1])
-				for i := range targets {
-					if targets[i].Name == name {
-						targets[i].Comment = desc
-					}
-				}
+			trimmed = strings.TrimPrefix(trimmed, `@echo "`)
+			trimmed = strings.TrimSuffix(trimmed, `"`)
+			if parts := strings.SplitN(strings.TrimSpace(trimmed), " - ", 2); len(parts) == 2 {
+				targets = append(targets, makeTarget{Name: strings.TrimSpace(parts[0]), Comment: strings.TrimSpace(parts[1])})
 			}
 		}
 	}
-
 	return targets
 }
 
-func discoverPackages() []string {
-	var pkgs []string
 
-	// cmd/
-	pkgs = append(pkgs, "cmd/ — CLI commands")
 
-	// internal/*/
-	entries, err := os.ReadDir("internal")
-	if err != nil {
-		return pkgs
-	}
-	for _, e := range entries {
-		if e.IsDir() {
-			pkgs = append(pkgs, fmt.Sprintf("internal/%s/", e.Name()))
-		}
-	}
 
-	return pkgs
-}
-
-func discoverEnvVars() []string {
-	var envs []string
-	seen := make(map[string]bool)
-
-	// Read from source to get actual env var names
-	content, err := os.ReadFile("cmd/root.go")
-	if err != nil {
-		return envs
-	}
-
-	for _, line := range strings.Split(string(content), "\n") {
-		for _, match := range extractQuotedStrings(line) {
-			if strings.HasPrefix(match, "OUTLINE_") && !seen[match] {
-				seen[match] = true
-				envs = append(envs, match)
-			}
-		}
-	}
-
-	return envs
-}
-
-func extractQuotedStrings(line string) []string {
-	var results []string
-	for {
-		idx := strings.Index(line, "\"")
-		if idx < 0 {
-			break
-		}
-		line = line[idx+1:]
-		end := strings.Index(line, "\"")
-		if end < 0 {
-			break
-		}
-		results = append(results, line[:end])
-		line = line[end+1:]
-	}
-	return results
-}

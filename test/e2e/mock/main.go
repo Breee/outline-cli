@@ -25,8 +25,10 @@ func main() {
 			return
 		}
 		var req struct {
-			Title string `json:"title"`
-			Text  string `json:"text"`
+			Title        string `json:"title"`
+			Text         string `json:"text"`
+			CollectionID string `json:"collectionId"`
+			Publish      bool   `json:"publish"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -37,6 +39,17 @@ func main() {
 		docs[doc.ID] = doc
 		mu.Unlock()
 		_ = json.NewEncoder(w).Encode(map[string]any{"ok": true, "data": doc})
+	})
+
+	http.HandleFunc("/api/documents.search", func(w http.ResponseWriter, r *http.Request) {
+		_ = json.NewEncoder(w).Encode(map[string]any{"ok": true, "data": []any{}, "pagination": map[string]any{"total": 0}})
+	})
+
+	http.HandleFunc("/api/collections.list", func(w http.ResponseWriter, r *http.Request) {
+		cols := []map[string]any{
+			{"id": "col-1", "name": "col-1", "urlId": "col-1"},
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{"ok": true, "data": cols})
 	})
 
 	http.HandleFunc("/api/documents/", func(w http.ResponseWriter, r *http.Request) {
@@ -53,6 +66,14 @@ func main() {
 
 	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
+	})
+
+	http.HandleFunc("/api/auth.info", func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") == "" {
+			http.Error(w, "missing auth", http.StatusUnauthorized)
+			return
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{"ok": true, "data": map[string]any{"user": map[string]any{"name": "e2e"}}})
 	})
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
