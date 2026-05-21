@@ -2,6 +2,8 @@
 
 A modern Go Cobra CLI named `outline` for pushing markdown files to an [Outline](https://github.com/outline/outline) wiki.
 
+**[Documentation](https://breee.github.io/outline-cli/)**
+
 ## Features
 
 - Push one markdown file or full directory trees to Outline
