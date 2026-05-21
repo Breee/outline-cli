@@ -76,6 +76,12 @@ func generateCLIReference() error {
 		return fmt.Errorf("creating output dir: %w", err)
 	}
 
+	// Write section index.
+	indexContent := "---\ntitle: Commands\nweight: 50\n---\n"
+	if err := os.WriteFile(filepath.Join(docsOutputDir, "_index.md"), []byte(indexContent), 0o644); err != nil {
+		return fmt.Errorf("writing _index.md: %w", err)
+	}
+
 	rootCmd.DisableAutoGenTag = true
 	// Use stable default so generated docs don't vary by environment
 	rootCmd.PersistentFlags().Lookup("config").DefValue = "$HOME/.outline-cli/config.yaml"
