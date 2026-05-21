@@ -20,10 +20,10 @@ make help         # show this help
 ```
 
 ## Architecture
-- `cmd/ — CLI commands`
-- `internal/config/`
-- `internal/oidc/`
-- `internal/outline/`
+- `cmd/` — CLI commands
+- `internal/config/` — configuration, registry, keyring
+- `internal/oidc/` — OIDC browser/device auth flows
+- `internal/outline/` — Outline API client
 
 ## Key Patterns
 

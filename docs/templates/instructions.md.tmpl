@@ -11,9 +11,10 @@ make {{printf "%-12s" .Name}} # {{.Comment}}
 ```
 
 ## Architecture
-{{- range .Packages}}
-- `{{.}}`
-{{- end}}
+- `cmd/` — CLI commands
+- `internal/config/` — configuration, registry, keyring
+- `internal/oidc/` — OIDC browser/device auth flows
+- `internal/outline/` — Outline API client
 
 ## Key Patterns
 

@@ -224,32 +224,22 @@ func stripFrontmatter(content string) string {
 
 func generateLLMInstructions() error {
 	instructions := buildInstructionContent()
-
-	// .github/copilot-instructions.md
-	if err := os.MkdirAll(".github", 0o755); err != nil {
-		return err
+	outputs := []string{".github/copilot-instructions.md", "CLAUDE.md", ".cursor/rules"}
+	for _, path := range outputs {
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			return err
+		}
+		if err := os.WriteFile(path, []byte(instructions), 0o644); err != nil {
+			return err
+		}
 	}
-	if err := os.WriteFile(".github/copilot-instructions.md", []byte(instructions), 0o644); err != nil {
-		return err
-	}
-
-	// CLAUDE.md
-	if err := os.WriteFile("CLAUDE.md", []byte(instructions), 0o644); err != nil {
-		return err
-	}
-
-	// .cursor/rules
-	if err := os.MkdirAll(".cursor", 0o755); err != nil {
-		return err
-	}
-	return os.WriteFile(".cursor/rules", []byte(instructions), 0o644)
+	return nil
 }
 
 func buildInstructionContent() string {
 	data := instructionData{
-		Targets:  readMakefileTargets(),
-		Packages: discoverPackages(),
-		Options:  config.Registry,
+		Targets: readMakefileTargets(),
+		Options: config.Registry,
 	}
 
 	tmplPath := filepath.Join(filepath.Dir(docsDir), "templates", "instructions.md.tmpl")
@@ -267,9 +257,8 @@ func buildInstructionContent() string {
 }
 
 type instructionData struct {
-	Targets  []makeTarget
-	Packages []string
-	Options  []config.Option
+	Targets []makeTarget
+	Options []config.Option
 }
 
 type makeTarget struct {
@@ -284,80 +273,27 @@ func readMakefileTargets() []makeTarget {
 	}
 
 	var targets []makeTarget
-	lines := strings.Split(string(content), "\n")
-	for _, line := range lines {
-		// Skip non-target lines
-		if strings.HasPrefix(line, ".") || strings.HasPrefix(line, "#") ||
-			strings.HasPrefix(line, "\t") || strings.HasPrefix(line, " ") {
-			continue
-		}
-		idx := strings.Index(line, ":")
-		if idx <= 0 {
-			continue
-		}
-		name := strings.TrimSpace(line[:idx])
-		if name == "" || strings.ContainsAny(name, "=$()") {
-			continue
-		}
-		if idx+1 < len(line) && line[idx+1] == '=' {
-			continue
-		}
-		// Skip uppercase-only names (Makefile variables like BINARY)
-		if name == strings.ToUpper(name) {
-			continue
-		}
-		targets = append(targets, makeTarget{Name: name})
-	}
-
-	// Parse help target for descriptions
-	helpSection := false
-	for _, line := range lines {
+	inHelp := false
+	for _, line := range strings.Split(string(content), "\n") {
 		if strings.Contains(line, "help:") {
-			helpSection = true
+			inHelp = true
 			continue
 		}
-		if helpSection {
+		if inHelp {
 			if !strings.HasPrefix(line, "\t") {
 				break
 			}
 			trimmed := strings.TrimSpace(line)
-			trimmed = strings.TrimPrefix(trimmed, "@echo \"")
-			trimmed = strings.TrimSuffix(trimmed, "\"")
-			trimmed = strings.TrimSpace(trimmed)
-			parts := strings.SplitN(trimmed, " - ", 2)
-			if len(parts) == 2 {
-				name := strings.TrimSpace(parts[0])
-				desc := strings.TrimSpace(parts[1])
-				for i := range targets {
-					if targets[i].Name == name {
-						targets[i].Comment = desc
-					}
-				}
+			trimmed = strings.TrimPrefix(trimmed, `@echo "`)
+			trimmed = strings.TrimSuffix(trimmed, `"`)
+			if parts := strings.SplitN(strings.TrimSpace(trimmed), " - ", 2); len(parts) == 2 {
+				targets = append(targets, makeTarget{Name: strings.TrimSpace(parts[0]), Comment: strings.TrimSpace(parts[1])})
 			}
 		}
 	}
-
 	return targets
 }
 
-func discoverPackages() []string {
-	var pkgs []string
 
-	// cmd/
-	pkgs = append(pkgs, "cmd/ — CLI commands")
-
-	// internal/*/
-	entries, err := os.ReadDir("internal")
-	if err != nil {
-		return pkgs
-	}
-	for _, e := range entries {
-		if e.IsDir() {
-			pkgs = append(pkgs, fmt.Sprintf("internal/%s/", e.Name()))
-		}
-	}
-
-	return pkgs
-}
 
 
