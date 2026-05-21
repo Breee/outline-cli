@@ -36,7 +36,7 @@ make help         # show this help
 - TUI uses bubbletea v2 Elm architecture: Model.Init/Update/View
 - TUI state machine: ViewBrowser → ViewReader, ViewBrowser → ViewSearch → ViewReader
 - Live search with debounce (300ms tick + incrementing ID pattern)
-- Glamour v2 renders markdown in TUI reader and `outline cat`
+- Glamour v2 renders markdown in TUI reader and `outline get documents <title>`
 
 ## Configuration
 

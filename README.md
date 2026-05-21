@@ -23,7 +23,7 @@ A modern Go Cobra CLI named `outline` for pushing markdown files to an [Outline]
 - Release artifacts for Linux (`amd64`, `arm64`, `armv7`), macOS (`amd64`, `arm64`), and Windows (`amd64`, `arm64`)
 - Shell autocompletion for bash, zsh, and fish
 - Interactive TUI (`outline tui`) for browsing and reading wiki documents with rendered markdown
-- `outline cat` to print documents to stdout with terminal-rendered markdown
+- `outline get documents <title>` prints glamour-rendered markdown (use `-o raw` for source)
 
 ## Install
 
@@ -153,17 +153,17 @@ outline tui --collection ops
 Key bindings: `/` search, `j/k` navigate, `enter` open, `esc` back, `q` quit.
 Documents are rendered with syntax-highlighted markdown. Search is live with debounce.
 
-### Cat (Print Document)
+### Get Document (Rendered)
 
 ```bash
-# Rendered markdown output
-outline cat "Deployment Guide"
+# Rendered markdown output (default)
+outline get documents "Deployment Guide"
 
 # Raw markdown (pipe-friendly)
-outline cat "Deployment Guide" --raw | less
+outline get documents "Deployment Guide" -o raw | less
 
-# By document ID
-outline cat --id abc123
+# JSON metadata
+outline get documents "Deployment Guide" -o json
 ```
 
 ### Autocompletion
