@@ -22,7 +22,7 @@ func TestPushMarkdownViaAPI(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cmd := exec.Command("go", "run", ".", "--server-url", serverURL, "--api-token", "e2e-token", "push", "--collection-id", "col-1", "--path", md)
+	cmd := exec.Command("go", "run", ".", "--server-url", serverURL, "--api-token", "e2e-token", "push", "--yes", "--collection-id", "col-1", "--path", md)
 	cmd.Dir = filepath.Clean("../..")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
