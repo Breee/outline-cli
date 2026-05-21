@@ -27,14 +27,20 @@ func init() {
 		Long: `Initiates Outline's OIDC login flow in your browser.
 A local HTTP server captures the callback and obtains an Outline session token.
 Requires --server-url to be set (the Outline instance URL).`,
+		Example: `  # Login to your Outline instance
+  outline auth oidc-login --server-url https://wiki.example.com
+
+  # Use a custom callback port
+  outline auth oidc-login --server-url https://wiki.example.com --port 9090`,
 		RunE: runOIDCLogin,
 	}
 	oidcCmd.Flags().IntVar(&oidcPort, "port", 10800, "Local port for OIDC callback server")
 
 	checkCmd := &cobra.Command{
-		Use:   "check",
-		Short: "Verify that the stored credentials are valid",
-		RunE:  runAuthCheck,
+		Use:     "check",
+		Short:   "Verify that the stored credentials are valid",
+		Example: "  outline auth check --server-url https://wiki.example.com",
+		RunE:    runAuthCheck,
 	}
 
 	authCmd.AddCommand(oidcCmd, checkCmd)

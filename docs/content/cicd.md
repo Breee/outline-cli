@@ -1,5 +1,6 @@
 ---
 title: "CI/CD Integration"
+weight: 48
 description: "Automatically publish documentation on every git push using GitHub Actions or GitLab CI."
 llmsDescription: "outline-cli CI/CD integration: use env vars OUTLINE_HOST and OUTLINE_API_TOKEN (no config file or keyring needed). GitHub Actions: use `Breee/outline-cli/action@v1` composite action with inputs server-url, api-token, collection, path, create-collection. GitLab CI: curl binary from releases, run `outline push`. Example GitHub workflow triggers on push to main with path filter on docs/**. The CLI exits 0 on success, non-zero on failure for CI gate usage."
 ---

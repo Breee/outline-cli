@@ -46,14 +46,14 @@ make help         # show this help
 
 ## Docs Generation
 
-Reference docs are auto-generated from the cobra command tree. Never hand-edit files in `docs/reference/generated/`.
+Reference docs are auto-generated from the cobra command tree. Never hand-edit files in `docs/content/commands/`.
 
 ```bash
 make docs  # runs: go run . docs generate
 ```
 
 This produces:
-- `docs/reference/generated/*.md` — CLI reference pages
+- `docs/content/commands/*.md` — CLI reference pages
 - `llms.txt` — structured index for AI tools
 - `llms-full.txt` — complete docs as single file
 - `.github/copilot-instructions.md`, `CLAUDE.md`, `.cursor/rules` — AI tool instructions

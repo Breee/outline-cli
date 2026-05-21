@@ -1,5 +1,6 @@
 ---
 title: "Configuration"
+weight: 40
 description: "Manage outline-cli configuration with config set/get/list commands."
 llmsDescription: "outline-cli config stored at ~/.outline-cli/config.yaml. Commands: `outline config set <key> <value>`, `outline config get <key>`, `outline config list`, `outline config path`. Valid keys: server_url, auth_method (oidc|api-token|basic), token_storage (keyring|file), oidc_port (int), api_token (stored in keyring), password (stored in keyring). Secret keys (api_token, password) are stored in OS keyring by default, masked in `config list`. Set token_storage=file for headless environments."
 ---

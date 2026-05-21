@@ -17,30 +17,36 @@ func init() {
 
 	configCmd.AddCommand(
 		&cobra.Command{
-			Use:   "get <key>",
-			Short: "Print the value of a config key",
-			Args:  cobra.ExactArgs(1),
-			RunE:  runConfigGet,
+			Use:     "get <key>",
+			Short:   "Print the value of a config key",
+			Example: "  outline config get server_url",
+			Args:    cobra.ExactArgs(1),
+			RunE:    runConfigGet,
 		},
 		&cobra.Command{
 			Use:   "set <key> <value>",
 			Short: "Set a config key to a value",
 			Long: fmt.Sprintf("Set a config key to a value.\n\nAvailable keys:\n  %s",
 				strings.Join(config.ValidKeys, "\n  ")),
+			Example: `  outline config set server_url https://wiki.example.com
+  outline config set api_token sk-your-token
+  outline config set auth_method oidc`,
 			Args: cobra.ExactArgs(2),
 			RunE: runConfigSet,
 		},
 		&cobra.Command{
-			Use:   "list",
-			Short: "List all config values",
-			Args:  cobra.NoArgs,
-			RunE:  runConfigList,
+			Use:     "list",
+			Short:   "List all config values",
+			Example: "  outline config list",
+			Args:    cobra.NoArgs,
+			RunE:    runConfigList,
 		},
 		&cobra.Command{
-			Use:   "path",
-			Short: "Print the config file path",
-			Args:  cobra.NoArgs,
-			Run:   func(cmd *cobra.Command, _ []string) { cmd.Println(cfgFile) },
+			Use:     "path",
+			Short:   "Print the config file path",
+			Example: "  outline config path",
+			Args:    cobra.NoArgs,
+			Run:     func(cmd *cobra.Command, _ []string) { cmd.Println(cfgFile) },
 		},
 	)
 

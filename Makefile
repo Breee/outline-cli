@@ -28,7 +28,7 @@ completions:
 
 docs:
 	go run . docs generate
-	@echo "Generated: docs/reference/generated/, llms.txt, llms-full.txt, .github/copilot-instructions.md, CLAUDE.md, .cursor/rules"
+	@echo "Generated: docs/content/commands/, llms.txt, llms-full.txt, .github/copilot-instructions.md, CLAUDE.md, .cursor/rules"
 
 dev-up:
 	docker compose -f dev/docker-compose.yml up -d

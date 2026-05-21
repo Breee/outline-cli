@@ -1,5 +1,6 @@
 ---
 title: "Config File Reference"
+weight: 60
 description: "YAML config file format for outline-cli."
 llmsDescription: "outline-cli config file at ~/.outline-cli/config.yaml. YAML format with fields: server_url (string), auth_method (oidc|api-token|basic), token_storage (keyring|file), oidc_port (int 1-65535), oidc_access_token (string, set by auth flow), api_token (string, only if token_storage=file), password (string, only if token_storage=file). File permissions are 0600. Secret fields are only written to file when token_storage=file; otherwise stored in OS keyring under service 'outline-cli'."
 ---

@@ -13,6 +13,19 @@ Push markdown files to Outline
 outline push [flags]
 ```
 
+### Examples
+
+```
+  # Push a single file
+  outline push --path ./README.md --collection-id "Engineering"
+
+  # Push a directory tree
+  outline push --path ./docs/ --collection-id "Docs"
+
+  # Create the collection if it doesn't exist
+  outline push --path ./docs/ --collection-id "New Docs" --create-collection
+```
+
 ### Options
 
 ```

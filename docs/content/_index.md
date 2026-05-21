@@ -52,6 +52,6 @@ This documentation is optimized for AI consumption:
 
 ## Next Steps
 
-- [Installation](guide/install.md) — download and set up
-- [Quick Start](guide/quickstart.md) — first push in 2 minutes
-- [CI/CD Integration](guide/cicd.md) — automate doc publishing
+- [Installation]({{< relref "install" >}}) — download and set up
+- [Quick Start]({{< relref "quickstart" >}}) — first push in 2 minutes
+- [CI/CD Integration]({{< relref "cicd" >}}) — automate doc publishing

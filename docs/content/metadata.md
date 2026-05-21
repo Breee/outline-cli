@@ -1,5 +1,6 @@
 ---
 title: "Metadata Headers"
+weight: 47
 description: "Control document title, collection, icon, and parent using HTML comment metadata."
 llmsDescription: "outline-cli metadata headers are HTML comments at the top of markdown files. Format: `<!-- Key: Value -->`. Supported keys: Collection (target collection name/slug/UUID, overrides --collection-id flag), Title (explicit document title), Icon (emoji or icon name for Outline UI), Parent (parent document title for nesting). Title resolution order: <!-- Title --> header > first # H1 heading > filename without extension. Example: `<!-- Collection: Engineering -->\n<!-- Title: Deploy Guide -->\n<!-- Icon: 🚀 -->\n<!-- Parent: Operations -->`"
 ---

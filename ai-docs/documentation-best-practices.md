@@ -22,7 +22,7 @@ If a new flag or command is added, `make docs` picks it up. No manual doc edits 
 
 | Content | Source | Maintained by |
 |---------|--------|---------------|
-| CLI reference (`docs/reference/generated/`) | `cobra/doc` | **go code** |
+| CLI reference (`docs/content/commands/`) | `cobra/doc` | **go code** |
 | `llms.txt`, `llms-full.txt` | frontmatter in `docs/` | **go code** |
 | LLM instructions (copilot, claude, cursor) | template in `cmd/docs.go` | **go code** |
 | Guide pages (`docs/guide/`) | — | **humans** |
