@@ -5,7 +5,6 @@ description: "Automatically publish documentation on every git push using GitHub
 llmsDescription: "outline-cli CI/CD integration: use env vars OUTLINE_HOST and OUTLINE_API_TOKEN (no config file or keyring needed). GitHub Actions: use `Breee/outline-cli/action@v1` composite action with inputs server-url, api-token, collection, path, create-collection. GitLab CI: curl binary from releases, run `outline push`. Example GitHub workflow triggers on push to main with path filter on docs/**. The CLI exits 0 on success, non-zero on failure for CI gate usage."
 ---
 
-# CI/CD Integration
 
 Publish documentation automatically on every git push. No config file or keyring needed — environment variables are all that's required.
 
@@ -93,21 +92,9 @@ outline push --collection-id "${OUTLINE_COLLECTION}" --path ./docs/ --create-col
 | `OUTLINE_API_TOKEN` | Yes | API token |
 | `OUTLINE_COLLECTION` | No | Default collection (can use `--collection-id` flag instead) |
 
-!!! tip "`OUTLINE_HOST` vs `OUTLINE_SERVER_URL`"
-    Both work. `OUTLINE_HOST` is shorter and more natural for CI configs.
-
-## Conditional Publishing
-
-Only publish when docs actually change:
-
-```yaml
-on:
-  push:
-    branches: [main]
-    paths:
-      - 'docs/**'
-      - '*.md'
-```
+{{< callout type="info" >}}
+Both `OUTLINE_HOST` and `OUTLINE_SERVER_URL` work. `OUTLINE_HOST` is shorter and more natural for CI configs.
+{{< /callout >}}
 
 ## Exit Codes
 

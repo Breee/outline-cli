@@ -20,6 +20,7 @@ Available keys:
   oidc_port
   api_token
   password
+  oidc_access_token
 
 ```
 outline config set <key> <value> [flags]

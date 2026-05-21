@@ -32,7 +32,7 @@ func init() {
 		Short: "Generate all docs: CLI reference, llms.txt, LLM instructions",
 		RunE:  runDocsGenerate,
 	}
-	genCmd.Flags().StringVarP(&docsOutputDir, "output", "o", "docs/content/commands", "Output directory for CLI reference")
+	genCmd.Flags().StringVarP(&docsOutputDir, "output", "o", "docs/content/docs/commands", "Output directory for CLI reference")
 	genCmd.Flags().StringVar(&docsDir, "docs-dir", "docs/content", "Docs content directory")
 	genCmd.Flags().StringVar(&docsSiteURL, "site-url", "https://breee.github.io/outline-cli", "Site base URL for links")
 
@@ -47,13 +47,19 @@ func runDocsGenerate(_ *cobra.Command, _ []string) error {
 		return err
 	}
 
-	// 2. Generate llms.txt and llms-full.txt
+	// 2. Generate reference docs from registry
+	fmt.Println("Generating reference docs...")
+	if err := generateRegistryDocs(); err != nil {
+		return err
+	}
+
+	// 3. Generate llms.txt and llms-full.txt
 	fmt.Println("Generating llms.txt...")
 	if err := generateLLMsTxt(); err != nil {
 		return err
 	}
 
-	// 3. Generate LLM tool instructions
+	// 4. Generate LLM tool instructions
 	fmt.Println("Generating LLM tool instructions...")
 	if err := generateLLMInstructions(); err != nil {
 		return err
@@ -82,7 +88,7 @@ func generateCLIReference() error {
 
 func addFrontmatter(dir string) error {
 	return filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if err != nil || info.IsDir() || !strings.HasSuffix(path, ".md") {
+		if err != nil || info.IsDir() || !strings.HasSuffix(path, ".md") || filepath.Base(path) == "_index.md" {
 			return err
 		}
 
@@ -105,6 +111,70 @@ generated: true
 
 		return os.WriteFile(path, []byte(frontmatter+string(content)), 0o644)
 	})
+}
+
+// --- Registry-based Reference Docs ---
+
+func generateRegistryDocs() error {
+	docsBase := filepath.Dir(docsOutputDir) // docs/content/docs
+	if err := generateConfigFileMD(docsBase); err != nil {
+		return err
+	}
+	return generateEnvVarsMD(docsBase)
+}
+
+func generateConfigFileMD(dir string) error {
+	var buf strings.Builder
+	buf.WriteString("---\ntitle: \"Config File Reference\"\nweight: 60\ndescription: \"YAML config file format for outline-cli.\"\ngenerated: true\n---\n\n")
+	buf.WriteString("Config file location: `~/.outline-cli/config.yaml` (override with `--config <path>`)\n\n")
+	buf.WriteString("## Format\n\n```yaml\n")
+	for _, opt := range config.Registry {
+		if opt.Key == "" || opt.Secret {
+			continue
+		}
+		buf.WriteString(opt.Key + ": # " + opt.Description + "\n")
+	}
+	buf.WriteString("```\n\n## Fields\n\n| Key | Secret | Env Var | Description |\n|-----|--------|---------|-------------|\n")
+	for _, opt := range config.Registry {
+		if opt.Key == "" {
+			continue
+		}
+		secret := "no"
+		if opt.Secret {
+			secret = "yes"
+		}
+		envVar := "—"
+		if opt.EnvVar != "" {
+			envVar = "`" + opt.EnvVar + "`"
+		}
+		buf.WriteString(fmt.Sprintf("| `%s` | %s | %s | %s |\n", opt.Key, secret, envVar, opt.Description))
+	}
+	buf.WriteString("\n## File Permissions\n\nThe config file is always written with `0600` permissions (owner read/write only).\n\n")
+	buf.WriteString("## Secret Storage\n\nWhen `token_storage=keyring` (default), secret keys are stored in the OS keyring under service `outline-cli`.\nSet `token_storage=file` for headless environments (CI, containers) — secrets are then written to the YAML file in plaintext.\n")
+	return os.WriteFile(filepath.Join(dir, "config-file.md"), []byte(buf.String()), 0o644)
+}
+
+func generateEnvVarsMD(dir string) error {
+	var buf strings.Builder
+	buf.WriteString("---\ntitle: \"Environment Variables\"\nweight: 65\ndescription: \"All environment variables supported by outline-cli.\"\ngenerated: true\n---\n\n")
+	buf.WriteString("All environment variables recognized by outline-cli.\n\n")
+	buf.WriteString("| Variable | Config Key | Description |\n|----------|-----------|-------------|\n")
+	for _, opt := range config.Registry {
+		if opt.EnvVar == "" {
+			continue
+		}
+		key := "—"
+		if opt.Key != "" {
+			key = "`" + opt.Key + "`"
+		}
+		buf.WriteString(fmt.Sprintf("| `%s` | %s | %s |\n", opt.EnvVar, key, opt.Description))
+		if opt.AltEnvVar != "" {
+			buf.WriteString(fmt.Sprintf("| `%s` | %s | %s (alias) |\n", opt.AltEnvVar, key, opt.Description))
+		}
+	}
+	buf.WriteString("\n## Priority\n\n```\nCLI flags > Environment variables > OS keyring > Config file\n```\n\n")
+	buf.WriteString("## CI/CD Minimal Setup\n\nOnly two variables are needed:\n\n```bash\nexport OUTLINE_HOST=https://outline.example.com\nexport OUTLINE_API_TOKEN=sk-your-token\noutline push --collection-id \"Docs\" --path ./docs/\n```\n")
+	return os.WriteFile(filepath.Join(dir, "env-vars.md"), []byte(buf.String()), 0o644)
 }
 
 // --- llms.txt Generation ---

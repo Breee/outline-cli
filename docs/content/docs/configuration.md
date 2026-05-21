@@ -5,9 +5,20 @@ description: "Manage outline-cli configuration with config set/get/list commands
 llmsDescription: "outline-cli config stored at ~/.outline-cli/config.yaml. Commands: `outline config set <key> <value>`, `outline config get <key>`, `outline config list`, `outline config path`. Valid keys: server_url, auth_method (oidc|api-token|basic), token_storage (keyring|file), oidc_port (int), api_token (stored in keyring), password (stored in keyring). Secret keys (api_token, password) are stored in OS keyring by default, masked in `config list`. Set token_storage=file for headless environments."
 ---
 
-# Configuration
 
 outline-cli uses a YAML config file at `~/.outline-cli/config.yaml` with OS keyring for secrets.
+
+## Custom Config File Location
+
+Override the config path with `--config`:
+
+```bash
+outline --config ./my-config.yaml push --path ./docs/ --collection-id "Docs"
+```
+
+{{< callout type="warning" >}}
+If you use a project-local config file, add it to `.gitignore` — it may contain secrets when `token_storage=file` is set.
+{{< /callout >}}
 
 ## Commands
 
@@ -54,6 +65,3 @@ auth_method: oidc
 token_storage: keyring
 oidc_port: 10800
 ```
-
-!!! warning
-    Never commit your config file to git. Add `config.yaml` to `.gitignore`.

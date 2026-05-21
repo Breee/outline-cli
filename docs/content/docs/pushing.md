@@ -5,7 +5,6 @@ description: "Push markdown files and directories to Outline collections."
 llmsDescription: "outline push command: `outline push --path <file-or-dir> --collection-id <name|slug|uuid>`. Flags: --path (default '.'), --collection-id (required unless set in file metadata), --publish (default true), --create-collection (default false). Behavior: recursively walks directories for .md files, upserts by document title (searches existing, updates if found, creates if not). Sorts: shallower files first, index.md/README.md first, then alphabetical. Supports automatic image upload (local ![alt](path) rewritten to attachment URLs)."
 ---
 
-# Pushing Documents
 
 The `push` command uploads markdown files to your Outline wiki.
 

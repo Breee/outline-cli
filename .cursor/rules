@@ -43,6 +43,8 @@ make help         # show this help
 | `oidc_port` | — | no | Local port for OIDC callback |
 | `api_token` | `OUTLINE_API_TOKEN` | yes | API bearer token |
 | `password` | `OUTLINE_PASSWORD` | yes | Basic auth password |
+| `` | `OUTLINE_USERNAME` | no | Basic auth username |
+| `oidc_access_token` | `OUTLINE_OIDC_ACCESS_TOKEN` | yes | OIDC access token (set by auth oidc-login) |
 
 ## Docs Generation
 

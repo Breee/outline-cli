@@ -81,6 +81,21 @@ services:
       - "traefik.http.routers.outline.entrypoints=web"
       - "traefik.http.services.outline.loadbalancer.server.port=3000"
 
+  docs:
+    image: hugomods/hugo:exts
+    command: hugo server --bind 0.0.0.0 --baseURL http://docs.localhost/ --appendPort=false
+    working_dir: /src/docs
+    volumes:
+      - ../:/src:ro
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.docs.rule=Host(`docs.localhost`)"
+      - "traefik.http.routers.docs.entrypoints=web"
+      - "traefik.http.services.docs.loadbalancer.server.port=1313"
+
 volumes:
   postgres-data:
   outline-data:

@@ -52,6 +52,6 @@ This documentation is optimized for AI consumption:
 
 ## Next Steps
 
-- [Installation]({{< relref "install" >}}) — download and set up
-- [Quick Start]({{< relref "quickstart" >}}) — first push in 2 minutes
-- [CI/CD Integration]({{< relref "cicd" >}}) — automate doc publishing
+{{< cards >}}
+  {{< card link="docs" title="Read the Docs" subtitle="Installation, usage, configuration, and full CLI reference" icon="book-open" >}}
+{{< /cards >}}

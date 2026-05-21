@@ -21,9 +21,11 @@ type File struct {
 
 // ValidKeys lists all configurable keys (derived from Registry).
 var ValidKeys = func() []string {
-	keys := make([]string, len(Registry))
-	for i, opt := range Registry {
-		keys[i] = opt.Key
+	var keys []string
+	for _, opt := range Registry {
+		if opt.Key != "" {
+			keys = append(keys, opt.Key)
+		}
 	}
 	return keys
 }()
