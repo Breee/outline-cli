@@ -357,7 +357,9 @@ A modern CLI for pushing markdown files to an Outline wiki.
 * [outline auth](outline_auth.md)	 - Authentication helpers
 * [outline completion](outline_completion.md)	 - Generate the autocompletion script for the specified shell
 * [outline config](outline_config.md)	 - Manage CLI configuration
+* [outline pull](outline_pull.md)	 - Pull documents from Outline to local markdown files
 * [outline push](outline_push.md)	 - Push markdown files to Outline
+* [outline search](outline_search.md)	 - Search documents in Outline
 
 ---
 
@@ -942,6 +944,56 @@ outline config set <key> <value> [flags]
 
 ---
 
+## outline pull
+
+## outline pull
+
+Pull documents from Outline to local markdown files
+
+```
+outline pull [flags]
+```
+
+### Examples
+
+```
+  # Pull entire collection to a directory
+  outline pull --collection "Engineering" --output ./docs/
+
+  # Pull a single document by title
+  outline pull --doc "Deployment Guide" --output ./deploy.md
+
+  # Pull with metadata headers
+  outline pull --collection "Ops" --output ./ops/ --with-metadata
+```
+
+### Options
+
+```
+      --collection string   Collection to pull (name, slug, or UUID)
+      --doc string          Pull a single document by title
+  -h, --help                help for pull
+  -o, --output string       Output directory or file path (default ".")
+      --with-metadata       Include metadata comment headers in output
+```
+
+### Options inherited from parent commands
+
+```
+      --api-token string           Outline API token
+      --config string              config file (default "$HOME/.outline-cli/config.yaml")
+      --oidc-access-token string   OIDC access token
+      --password string            Basic auth password
+      --server-url string          Outline server URL
+      --username string            Basic auth username
+```
+
+### SEE ALSO
+
+* [outline](outline.md)	 - Push markdown documents to Outline
+
+---
+
 ## outline push
 
 ## outline push
@@ -970,9 +1022,66 @@ outline push [flags]
 ```
       --collection-id string   Default Outline collection (name, slug, or UUID)
       --create-collection      Create collection if it does not exist
+      --diff                   Show content diff for changed documents
   -h, --help                   help for push
   -p, --path string            Path to markdown file or directory (default ".")
       --publish                Publish created documents (default true)
+  -y, --yes                    Skip confirmation prompt
+```
+
+### Options inherited from parent commands
+
+```
+      --api-token string           Outline API token
+      --config string              config file (default "$HOME/.outline-cli/config.yaml")
+      --oidc-access-token string   OIDC access token
+      --password string            Basic auth password
+      --server-url string          Outline server URL
+      --username string            Basic auth username
+```
+
+### SEE ALSO
+
+* [outline](outline.md)	 - Push markdown documents to Outline
+
+---
+
+## outline search
+
+## outline search
+
+Search documents in Outline
+
+```
+outline search <query> [flags]
+```
+
+### Examples
+
+```
+  # Basic search
+  outline search "kubernetes rollback"
+
+  # Filter by collection
+  outline search "deploy" --collection infrastructure
+
+  # JSON output for scripting
+  outline search "API key" --format json
+
+  # Compact output
+  outline search "auth" --format oneline
+
+  # Limit results
+  outline search "setup" --limit 5
+```
+
+### Options
+
+```
+      --collection string   Filter by collection (name, slug, or UUID)
+      --format string       Output format: default, json, oneline (default "default")
+  -h, --help                help for search
+      --limit int           Maximum number of results (default 25)
 ```
 
 ### Options inherited from parent commands

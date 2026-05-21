@@ -31,9 +31,11 @@ outline push [flags]
 ```
       --collection-id string   Default Outline collection (name, slug, or UUID)
       --create-collection      Create collection if it does not exist
+      --diff                   Show content diff for changed documents
   -h, --help                   help for push
   -p, --path string            Path to markdown file or directory (default ".")
       --publish                Publish created documents (default true)
+  -y, --yes                    Skip confirmation prompt
 ```
 
 ### Options inherited from parent commands

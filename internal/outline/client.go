@@ -56,6 +56,9 @@ type Document struct {
 	Title            string `json:"title"`
 	Text             string `json:"text"`
 	ParentDocumentID string `json:"parentDocumentId,omitempty"`
+	CollectionID     string `json:"collectionId,omitempty"`
+	UpdatedAt        string `json:"updatedAt,omitempty"`
+	URL              string `json:"url,omitempty"`
 }
 
 func NewClient(baseURL string, auth AuthConfig, httpClient *http.Client) (*Client, error) {
@@ -189,6 +192,91 @@ func (c *Client) SearchDocuments(ctx context.Context, collectionID, title string
 		docs = append(docs, d.Document)
 	}
 	return docs, nil
+}
+
+// SearchResult holds a search result with context snippet.
+type SearchResult struct {
+	Document Document `json:"document"`
+	Context  string   `json:"context"`
+}
+
+// Search performs a full-text search across documents.
+func (c *Client) Search(ctx context.Context, query string, collectionID string, limit int) ([]SearchResult, error) {
+	payload := map[string]any{
+		"query": query,
+	}
+	if collectionID != "" {
+		payload["collectionId"] = collectionID
+	}
+	if limit > 0 {
+		payload["limit"] = limit
+	}
+
+	var response struct {
+		OK   bool           `json:"ok"`
+		Data []SearchResult `json:"data"`
+		Err  string         `json:"error"`
+	}
+
+	if err := c.post(ctx, "/api/documents.search", payload, &response); err != nil {
+		return nil, err
+	}
+	if !response.OK {
+		return nil, errors.New(response.Err)
+	}
+	return response.Data, nil
+}
+
+// ListDocuments lists all documents in a collection.
+func (c *Client) ListDocuments(ctx context.Context, collectionID string) ([]Document, error) {
+	var allDocs []Document
+	offset := 0
+	limit := 100
+
+	for {
+		payload := map[string]any{
+			"collectionId": collectionID,
+			"limit":        limit,
+			"offset":       offset,
+		}
+
+		var response struct {
+			OK   bool       `json:"ok"`
+			Data []Document `json:"data"`
+			Err  string     `json:"error"`
+		}
+
+		if err := c.post(ctx, "/api/documents.list", payload, &response); err != nil {
+			return nil, err
+		}
+		if !response.OK {
+			return nil, errors.New(response.Err)
+		}
+		allDocs = append(allDocs, response.Data...)
+		if len(response.Data) < limit {
+			break
+		}
+		offset += limit
+	}
+
+	return allDocs, nil
+}
+
+// GetDocument retrieves a single document by ID.
+func (c *Client) GetDocument(ctx context.Context, id string) (Document, error) {
+	var response struct {
+		OK   bool     `json:"ok"`
+		Data Document `json:"data"`
+		Err  string   `json:"error"`
+	}
+
+	if err := c.post(ctx, "/api/documents.info", map[string]any{"id": id}, &response); err != nil {
+		return Document{}, err
+	}
+	if !response.OK {
+		return Document{}, errors.New(response.Err)
+	}
+	return response.Data, nil
 }
 
 // DocumentOptions holds optional fields for create/update.

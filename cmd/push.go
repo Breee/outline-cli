@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"os"
@@ -18,6 +19,8 @@ var (
 	pushCollection       string
 	pushPublish          bool
 	pushCreateCollection bool
+	pushYes              bool
+	pushDiff             bool
 )
 
 func init() {
@@ -39,6 +42,8 @@ func init() {
 	pushCmd.Flags().StringVar(&pushCollection, "collection-id", "", "Default Outline collection (name, slug, or UUID)")
 	pushCmd.Flags().BoolVar(&pushPublish, "publish", true, "Publish created documents")
 	pushCmd.Flags().BoolVar(&pushCreateCollection, "create-collection", false, "Create collection if it does not exist")
+	pushCmd.Flags().BoolVarP(&pushYes, "yes", "y", false, "Skip confirmation prompt")
+	pushCmd.Flags().BoolVar(&pushDiff, "diff", false, "Show content diff for changed documents")
 	rootCmd.AddCommand(pushCmd)
 }
 
@@ -83,6 +88,18 @@ func runPush(cmd *cobra.Command, _ []string) error {
 	pushRoot, _ := filepath.Abs(pushPath)
 	if info, _ := os.Stat(pushRoot); info != nil && !info.IsDir() {
 		pushRoot = filepath.Dir(pushRoot)
+	}
+
+	// Pre-scan: if --yes is not set, check existing docs and prompt.
+	if !pushYes {
+		confirmed, err := confirmPush(ctx, cmd, client, files, pushRoot, collectionCache)
+		if err != nil {
+			return err
+		}
+		if !confirmed {
+			cmd.PrintErrln("Aborted.")
+			return nil
+		}
 	}
 
 	for _, file := range files {
@@ -416,4 +433,158 @@ func replaceAllStringSubmatchFunc(re *regexp.Regexp, str string, repl func([]str
 	}
 	result.WriteString(str[lastIndex:])
 	return result.String(), nil
+}
+
+// pushChange represents a planned change for a single file.
+type pushChange struct {
+	file       string
+	title      string
+	action     string // "create", "update", "unchanged"
+	existingID string
+	localBody  string
+	remoteBody string
+}
+
+// confirmPush scans files, checks against existing docs, and prompts the user.
+func confirmPush(ctx context.Context, cmd *cobra.Command, client *outline.Client, files []string, pushRoot string, collectionCache map[string]string) (bool, error) {
+	var changes []pushChange
+	var creates, updates, unchanged int
+
+	for _, file := range files {
+		content, err := os.ReadFile(file)
+		if err != nil {
+			return false, err
+		}
+
+		meta := parseMetadata(string(content))
+		body := stripMetadata(string(content))
+
+		collection := meta.Collection
+		if collection == "" {
+			collection = pushCollection
+		}
+		if collection == "" {
+			continue // will error later during actual push
+		}
+
+		collectionID, ok := collectionCache[collection]
+		if !ok {
+			collectionID, err = client.ResolveCollectionID(ctx, collection)
+			if err != nil {
+				// Collection doesn't exist yet → all files will be creates.
+				changes = append(changes, pushChange{file: file, title: titleForFile(file, body, meta), action: "create"})
+				creates++
+				continue
+			}
+			collectionCache[collection] = collectionID
+		}
+
+		title := titleForFile(file, body, meta)
+
+		// Check if document already exists.
+		existing, err := client.SearchDocuments(ctx, collectionID, title)
+		if err != nil {
+			// Can't check → assume create.
+			changes = append(changes, pushChange{file: file, title: title, action: "create"})
+			creates++
+			continue
+		}
+
+		var found bool
+		var existingDoc outline.Document
+		for _, d := range existing {
+			if d.Title == title {
+				existingDoc = d
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			changes = append(changes, pushChange{file: file, title: title, action: "create"})
+			creates++
+		} else {
+			// Compare content.
+			remoteText := strings.TrimSpace(existingDoc.Text)
+			localText := strings.TrimSpace(body)
+			if remoteText == localText {
+				changes = append(changes, pushChange{file: file, title: title, action: "unchanged", existingID: existingDoc.ID})
+				unchanged++
+			} else {
+				changes = append(changes, pushChange{file: file, title: title, action: "update", existingID: existingDoc.ID, localBody: body, remoteBody: existingDoc.Text})
+				updates++
+			}
+		}
+	}
+
+	// No changes needed → proceed silently.
+	if creates == 0 && updates == 0 {
+		cmd.PrintErrln("All documents are up to date.")
+		return false, nil
+	}
+
+	// Print summary.
+	cmd.PrintErrf("\nPlanned changes (%d files):\n", len(changes))
+	for _, c := range changes {
+		switch c.action {
+		case "create":
+			cmd.PrintErrf("  + create  %q\t(%s)\n", c.title, c.file)
+		case "update":
+			cmd.PrintErrf("  ~ update  %q\t(%s)\n", c.title, c.file)
+		case "unchanged":
+			cmd.PrintErrf("    unchanged  %q\n", c.title)
+		}
+	}
+	cmd.PrintErrf("\n%d to create, %d to update, %d unchanged.\n", creates, updates, unchanged)
+
+	// Show diffs if requested.
+	if pushDiff {
+		for _, c := range changes {
+			if c.action == "update" {
+				cmd.PrintErrf("\n--- remote: %s\n+++ local:  %s\n", c.title, c.file)
+				printSimpleDiff(cmd, c.remoteBody, c.localBody)
+			}
+		}
+	}
+
+	// Prompt.
+	cmd.PrintErrf("\nProceed? [y/N] ")
+	reader := bufio.NewReader(os.Stdin)
+	answer, _ := reader.ReadString('\n')
+	answer = strings.TrimSpace(strings.ToLower(answer))
+	return answer == "y" || answer == "yes", nil
+}
+
+func titleForFile(file, body string, meta docMetadata) string {
+	if meta.Title != "" {
+		return meta.Title
+	}
+	return documentTitle(file, body)
+}
+
+// printSimpleDiff prints a basic line-level diff between two strings.
+func printSimpleDiff(cmd *cobra.Command, remote, local string) {
+	remoteLines := strings.Split(remote, "\n")
+	localLines := strings.Split(local, "\n")
+
+	// Simple: show lines unique to each side (not a full unified diff, but useful).
+	remoteSet := make(map[string]bool, len(remoteLines))
+	for _, l := range remoteLines {
+		remoteSet[l] = true
+	}
+	localSet := make(map[string]bool, len(localLines))
+	for _, l := range localLines {
+		localSet[l] = true
+	}
+
+	for _, l := range remoteLines {
+		if !localSet[l] {
+			cmd.PrintErrf("- %s\n", l)
+		}
+	}
+	for _, l := range localLines {
+		if !remoteSet[l] {
+			cmd.PrintErrf("+ %s\n", l)
+		}
+	}
 }
