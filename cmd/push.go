@@ -24,7 +24,15 @@ func init() {
 	pushCmd := &cobra.Command{
 		Use:   "push",
 		Short: "Push markdown files to Outline",
-		RunE:  runPush,
+		Example: `  # Push a single file
+  outline push --path ./README.md --collection-id "Engineering"
+
+  # Push a directory tree
+  outline push --path ./docs/ --collection-id "Docs"
+
+  # Create the collection if it doesn't exist
+  outline push --path ./docs/ --collection-id "New Docs" --create-collection`,
+		RunE: runPush,
 	}
 
 	pushCmd.Flags().StringVarP(&pushPath, "path", "p", ".", "Path to markdown file or directory")

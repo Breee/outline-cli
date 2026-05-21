@@ -1,22 +1,28 @@
 ---
-title: "outline config list"
-description: "CLI reference for outline config list"
-llmsDescription: "Auto-generated CLI reference for outline config list. Contains usage, flags, and examples."
+title: "outline auth check"
+description: "CLI reference for outline auth check"
+llmsDescription: "Auto-generated CLI reference for outline auth check. Contains usage, flags, and examples."
 generated: true
 ---
 
-## outline config list
+## outline auth check
 
-List all config values
+Verify that the stored credentials are valid
 
 ```
-outline config list [flags]
+outline auth check [flags]
+```
+
+### Examples
+
+```
+  outline auth check --server-url https://wiki.example.com
 ```
 
 ### Options
 
 ```
-  -h, --help   help for list
+  -h, --help   help for check
 ```
 
 ### Options inherited from parent commands
@@ -32,5 +38,5 @@ outline config list [flags]
 
 ### SEE ALSO
 
-* [outline config](outline_config.md)	 - Manage CLI configuration
+* [outline auth](outline_auth.md)	 - Authentication helpers
 

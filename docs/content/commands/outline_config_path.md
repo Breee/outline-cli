@@ -1,22 +1,28 @@
 ---
-title: "outline auth check"
-description: "CLI reference for outline auth check"
-llmsDescription: "Auto-generated CLI reference for outline auth check. Contains usage, flags, and examples."
+title: "outline config path"
+description: "CLI reference for outline config path"
+llmsDescription: "Auto-generated CLI reference for outline config path. Contains usage, flags, and examples."
 generated: true
 ---
 
-## outline auth check
+## outline config path
 
-Verify that the stored credentials are valid
+Print the config file path
 
 ```
-outline auth check [flags]
+outline config path [flags]
+```
+
+### Examples
+
+```
+  outline config path
 ```
 
 ### Options
 
 ```
-  -h, --help   help for check
+  -h, --help   help for path
 ```
 
 ### Options inherited from parent commands
@@ -32,5 +38,5 @@ outline auth check [flags]
 
 ### SEE ALSO
 
-* [outline auth](outline_auth.md)	 - Authentication helpers
+* [outline config](outline_config.md)	 - Manage CLI configuration
 

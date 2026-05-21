@@ -1,34 +1,28 @@
 ---
-title: "outline config set"
-description: "CLI reference for outline config set"
-llmsDescription: "Auto-generated CLI reference for outline config set. Contains usage, flags, and examples."
+title: "outline config get"
+description: "CLI reference for outline config get"
+llmsDescription: "Auto-generated CLI reference for outline config get. Contains usage, flags, and examples."
 generated: true
 ---
 
-## outline config set
+## outline config get
 
-Set a config key to a value
-
-### Synopsis
-
-Set a config key to a value.
-
-Available keys:
-  server_url
-  auth_method
-  token_storage
-  oidc_port
-  api_token
-  password
+Print the value of a config key
 
 ```
-outline config set <key> <value> [flags]
+outline config get <key> [flags]
+```
+
+### Examples
+
+```
+  outline config get server_url
 ```
 
 ### Options
 
 ```
-  -h, --help   help for set
+  -h, --help   help for get
 ```
 
 ### Options inherited from parent commands

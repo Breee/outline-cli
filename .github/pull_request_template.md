@@ -20,7 +20,7 @@ Closes #
 - [ ] `make test` passes
 - [ ] `make docs` run and generated files committed (CI will verify)
 - [ ] New config options added to `internal/config/registry.go`
-- [ ] No hand-edits to `docs/reference/generated/`, `.github/copilot-instructions.md`, `CLAUDE.md`, `.cursor/rules`, `llms.txt`, `llms-full.txt`
+- [ ] No hand-edits to `docs/content/commands/`, `.github/copilot-instructions.md`, `CLAUDE.md`, `.cursor/rules`, `llms.txt`, `llms-full.txt`
 
 ## Testing
 

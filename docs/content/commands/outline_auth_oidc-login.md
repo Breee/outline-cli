@@ -19,6 +19,16 @@ Requires --server-url to be set (the Outline instance URL).
 outline auth oidc-login [flags]
 ```
 
+### Examples
+
+```
+  # Login to your Outline instance
+  outline auth oidc-login --server-url https://wiki.example.com
+
+  # Use a custom callback port
+  outline auth oidc-login --server-url https://wiki.example.com --port 9090
+```
+
 ### Options
 
 ```

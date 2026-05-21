@@ -1,5 +1,6 @@
 ---
 title: "Authentication"
+weight: 30
 description: "Configure authentication for outline-cli: API token, OIDC, or basic auth."
 llmsDescription: "outline-cli authentication methods: 1) API token: set OUTLINE_API_TOKEN env var or `--api-token` flag or `outline config set api_token <token>` (stored in OS keyring). 2) OIDC browser login: run `outline auth oidc-login --port 10800`, uses PKCE + Dynamic Client Registration, token stored in keyring. 3) Basic auth: set OUTLINE_USERNAME and OUTLINE_PASSWORD env vars or `--username`/`--password` flags. Credential resolution priority: CLI flags > env vars > OS keyring > config file. Auto-reauthentication triggers OIDC flow when token expires (configurable via auth_method). Verify with `outline auth check`."
 ---

@@ -1,5 +1,6 @@
 ---
 title: "Environment Variables"
+weight: 65
 description: "All environment variables supported by outline-cli."
 llmsDescription: "outline-cli environment variables: OUTLINE_HOST or OUTLINE_SERVER_URL (server URL, OUTLINE_HOST takes priority), OUTLINE_API_TOKEN (API token for authentication), OUTLINE_USERNAME (basic auth username), OUTLINE_PASSWORD (basic auth password), OUTLINE_OIDC_ACCESS_TOKEN (OIDC access token, rarely set manually), OUTLINE_AUTH_METHOD (auto-auth method: oidc|api-token|basic). All override config file values. CLI flags override env vars."
 ---

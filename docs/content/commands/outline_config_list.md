@@ -1,22 +1,28 @@
 ---
-title: "outline config path"
-description: "CLI reference for outline config path"
-llmsDescription: "Auto-generated CLI reference for outline config path. Contains usage, flags, and examples."
+title: "outline config list"
+description: "CLI reference for outline config list"
+llmsDescription: "Auto-generated CLI reference for outline config list. Contains usage, flags, and examples."
 generated: true
 ---
 
-## outline config path
+## outline config list
 
-Print the config file path
+List all config values
 
 ```
-outline config path [flags]
+outline config list [flags]
+```
+
+### Examples
+
+```
+  outline config list
 ```
 
 ### Options
 
 ```
-  -h, --help   help for path
+  -h, --help   help for list
 ```
 
 ### Options inherited from parent commands
