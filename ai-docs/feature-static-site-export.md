@@ -78,13 +78,13 @@ jobs:
 
       - name: Push docs to Outline
         env:
-          OUTLINE_HOST: ${{ vars.OUTLINE_URL }}
+          OUTLINE_SERVER_URL: ${{ vars.OUTLINE_URL }}
           OUTLINE_API_TOKEN: ${{ secrets.OUTLINE_API_TOKEN }}
         run: outline push --collection-id "Docs" --path ./docs/ --create-collection
 
       - name: Export as static site
         env:
-          OUTLINE_HOST: ${{ vars.OUTLINE_URL }}
+          OUTLINE_SERVER_URL: ${{ vars.OUTLINE_URL }}
           OUTLINE_API_TOKEN: ${{ secrets.OUTLINE_API_TOKEN }}
         run: outline site export --collection-id "Docs" --output ./site/
 

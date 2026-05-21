@@ -39,8 +39,8 @@ make help         # show this help
 |-----|---------|--------|-------------|
 | `server_url` | `OUTLINE_SERVER_URL` | no | Outline server base URL |
 | `auth_method` | `OUTLINE_AUTH_METHOD` | no | Auth method: api_token, oidc, basic |
-| `token_storage` | — | no | Secret storage backend: keyring, file |
-| `oidc_port` | — | no | Local port for OIDC callback |
+| `token_storage` | `OUTLINE_TOKEN_STORAGE` | no | Secret storage backend: keyring, file |
+| `oidc_port` | `OUTLINE_OIDC_PORT` | no | Local port for OIDC callback |
 | `api_token` | `OUTLINE_API_TOKEN` | yes | API bearer token |
 | `password` | `OUTLINE_PASSWORD` | yes | Basic auth password |
 | `` | `OUTLINE_USERNAME` | no | Basic auth username |

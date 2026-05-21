@@ -2,7 +2,7 @@
 title: "CI/CD Integration"
 weight: 48
 description: "Automatically publish documentation on every git push using GitHub Actions or GitLab CI."
-llmsDescription: "outline-cli CI/CD integration: use env vars OUTLINE_HOST and OUTLINE_API_TOKEN (no config file or keyring needed). GitHub Actions: use `Breee/outline-cli/action@v1` composite action with inputs server-url, api-token, collection, path, create-collection. GitLab CI: curl binary from releases, run `outline push`. Example GitHub workflow triggers on push to main with path filter on docs/**. The CLI exits 0 on success, non-zero on failure for CI gate usage."
+llmsDescription: "outline-cli CI/CD integration: use env vars OUTLINE_SERVER_URL and OUTLINE_API_TOKEN (no config file or keyring needed). GitHub Actions: use `Breee/outline-cli/action@v1` composite action with inputs server-url, api-token, collection, path, create-collection. GitLab CI: curl binary from releases, run `outline push`. Example GitHub workflow triggers on push to main with path filter on docs/**. The CLI exits 0 on success, non-zero on failure for CI gate usage."
 ---
 
 
@@ -32,7 +32,7 @@ jobs:
 
       - name: Push docs to Outline
         env:
-          OUTLINE_HOST: ${{ vars.OUTLINE_URL }}
+          OUTLINE_SERVER_URL: ${{ vars.OUTLINE_URL }}
           OUTLINE_API_TOKEN: ${{ secrets.OUTLINE_API_TOKEN }}
         run: |
           outline push \
@@ -65,7 +65,7 @@ publish-docs:
   script:
     - outline push --collection-id "$OUTLINE_COLLECTION" --path ./docs/ --create-collection
   variables:
-    OUTLINE_HOST: https://outline.example.com
+    OUTLINE_SERVER_URL: https://outline.example.com
     # OUTLINE_API_TOKEN set in CI/CD settings
 ```
 
@@ -80,7 +80,7 @@ set -e
 # Install
 curl -sL "https://github.com/Breee/outline-cli/releases/latest/download/outline_linux_amd64.tar.gz" | tar xz -C /usr/local/bin
 
-# Push (env vars must be set: OUTLINE_HOST, OUTLINE_API_TOKEN)
+# Push (env vars must be set: OUTLINE_SERVER_URL, OUTLINE_API_TOKEN)
 outline push --collection-id "${OUTLINE_COLLECTION}" --path ./docs/ --create-collection
 ```
 
@@ -88,13 +88,22 @@ outline push --collection-id "${OUTLINE_COLLECTION}" --path ./docs/ --create-col
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `OUTLINE_HOST` | Yes | Outline server URL |
+| `OUTLINE_SERVER_URL` | Yes | Outline server URL |
 | `OUTLINE_API_TOKEN` | Yes | API token |
 | `OUTLINE_COLLECTION` | No | Default collection (can use `--collection-id` flag instead) |
 
-{{< callout type="info" >}}
-Both `OUTLINE_HOST` and `OUTLINE_SERVER_URL` work. `OUTLINE_HOST` is shorter and more natural for CI configs.
-{{< /callout >}}
+## Conditional Publishing
+
+Only publish when docs actually change:
+
+```yaml
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - '*.md'
+```
 
 ## Exit Codes
 

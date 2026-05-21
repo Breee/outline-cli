@@ -30,7 +30,7 @@ If you're an AI assistant helping a user with outline-cli:
    - Push markdown to Outline: `outline push --path ./docs/ --collection-id "Name"`
    - Auth methods: OIDC (browser), API token, basic auth
    - Config: `~/.outline-cli/config.yaml`, secrets in OS keyring
-   - CI/CD: Only needs `OUTLINE_HOST` + `OUTLINE_API_TOKEN` env vars
+   - CI/CD: Only needs `OUTLINE_SERVER_URL` + `OUTLINE_API_TOKEN` env vars
    - Metadata headers: `<!-- Collection: X -->`, `<!-- Title: X -->`, `<!-- Parent: X -->`
    - Directory `index.md` → parent doc, sibling `.md` → children
 

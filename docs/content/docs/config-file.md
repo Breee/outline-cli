@@ -22,8 +22,8 @@ oidc_port: # Local port for OIDC callback
 |-----|--------|---------|-------------|
 | `server_url` | no | `OUTLINE_SERVER_URL` | Outline server base URL |
 | `auth_method` | no | `OUTLINE_AUTH_METHOD` | Auth method: api_token, oidc, basic |
-| `token_storage` | no | — | Secret storage backend: keyring, file |
-| `oidc_port` | no | — | Local port for OIDC callback |
+| `token_storage` | no | `OUTLINE_TOKEN_STORAGE` | Secret storage backend: keyring, file |
+| `oidc_port` | no | `OUTLINE_OIDC_PORT` | Local port for OIDC callback |
 | `api_token` | yes | `OUTLINE_API_TOKEN` | API bearer token |
 | `password` | yes | `OUTLINE_PASSWORD` | Basic auth password |
 | `oidc_access_token` | yes | `OUTLINE_OIDC_ACCESS_TOKEN` | OIDC access token (set by auth oidc-login) |

@@ -11,6 +11,7 @@ import (
 	"github.com/Breee/outline-cli/internal/oidc"
 	"github.com/Breee/outline-cli/internal/outline"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -36,43 +37,59 @@ func Execute() {
 }
 
 func init() {
-	cobra.OnInitialize(loadFromConfig)
+	cobra.OnInitialize(initConfig)
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", config.DefaultPath(), "config file")
-	rootCmd.PersistentFlags().StringVar(&serverURL, "server-url", envOrDefault("OUTLINE_SERVER_URL", "OUTLINE_HOST"), "Outline server URL")
-	rootCmd.PersistentFlags().StringVar(&apiToken, "api-token", os.Getenv("OUTLINE_API_TOKEN"), "Outline API token")
-	rootCmd.PersistentFlags().StringVar(&basicUser, "username", os.Getenv("OUTLINE_USERNAME"), "Basic auth username")
-	rootCmd.PersistentFlags().StringVar(&basicPassword, "password", os.Getenv("OUTLINE_PASSWORD"), "Basic auth password")
-	rootCmd.PersistentFlags().StringVar(&oidcAccessToken, "oidc-access-token", os.Getenv("OUTLINE_OIDC_ACCESS_TOKEN"), "OIDC access token")
+	rootCmd.PersistentFlags().StringVar(&serverURL, "server-url", "", "Outline server URL")
+	rootCmd.PersistentFlags().StringVar(&apiToken, "api-token", "", "Outline API token")
+	rootCmd.PersistentFlags().StringVar(&basicUser, "username", "", "Basic auth username")
+	rootCmd.PersistentFlags().StringVar(&basicPassword, "password", "", "Basic auth password")
+	rootCmd.PersistentFlags().StringVar(&oidcAccessToken, "oidc-access-token", "", "OIDC access token")
+
+	// Bind flags to Viper keys.
+	_ = viper.BindPFlag("server_url", rootCmd.PersistentFlags().Lookup("server-url"))
+	_ = viper.BindPFlag("api_token", rootCmd.PersistentFlags().Lookup("api-token"))
+	_ = viper.BindPFlag("username", rootCmd.PersistentFlags().Lookup("username"))
+	_ = viper.BindPFlag("password", rootCmd.PersistentFlags().Lookup("password"))
+	_ = viper.BindPFlag("oidc_access_token", rootCmd.PersistentFlags().Lookup("oidc-access-token"))
 }
 
-// envOrDefault returns the value of the first non-empty environment variable.
-func envOrDefault(keys ...string) string {
-	for _, k := range keys {
-		if v := os.Getenv(k); v != "" {
-			return v
-		}
-	}
-	return ""
-}
+// initConfig initializes Viper: env bindings from Registry + config file.
+func initConfig() {
+	config.InitViper()
+	config.SetConfigFile(cfgFile)
 
-// loadFromConfig populates flags from the config file when not set via CLI/env.
-func loadFromConfig() {
-	cfg, err := config.Load(cfgFile)
-	if err != nil {
-		return
-	}
-	if serverURL == "" && cfg.ServerURL != "" {
-		serverURL = cfg.ServerURL
+	// Resolve values from Viper (flag > env > config file).
+	if serverURL == "" {
+		serverURL = viper.GetString("server_url")
 	}
 	if apiToken == "" {
-		apiToken = config.LoadAPIToken(cfg)
+		apiToken = viper.GetString("api_token")
+	}
+	if basicUser == "" {
+		basicUser = viper.GetString("username")
 	}
 	if basicPassword == "" {
-		basicPassword = config.LoadPassword(cfg)
+		basicPassword = viper.GetString("password")
 	}
 	if oidcAccessToken == "" {
-		oidcAccessToken = config.LoadToken(cfg)
+		oidcAccessToken = viper.GetString("oidc_access_token")
+	}
+
+	// Secrets may live in the OS keyring — check there if still empty.
+	if apiToken == "" || basicPassword == "" || oidcAccessToken == "" {
+		cfg, err := config.Load(cfgFile)
+		if err == nil {
+			if apiToken == "" {
+				apiToken = config.LoadAPIToken(cfg)
+			}
+			if basicPassword == "" {
+				basicPassword = config.LoadPassword(cfg)
+			}
+			if oidcAccessToken == "" {
+				oidcAccessToken = config.LoadToken(cfg)
+			}
+		}
 	}
 }
 
@@ -92,15 +109,10 @@ func isAuthenticated() bool {
 }
 
 // autoAuth performs automatic authentication using the configured method.
-// Returns nil if auth succeeds or no auto-auth is configured.
 func autoAuth(cmd *cobra.Command) error {
-	cfg, _ := config.Load(cfgFile)
-	method := os.Getenv("OUTLINE_AUTH_METHOD")
+	method := viper.GetString("auth_method")
 	if method == "" {
-		method = cfg.AuthMethod
-	}
-	if method == "" {
-		method = "oidc" // default
+		method = "oidc"
 	}
 
 	switch method {
@@ -108,9 +120,9 @@ func autoAuth(cmd *cobra.Command) error {
 		if serverURL == "" {
 			return fmt.Errorf("auto-auth requires --server-url or server_url in config")
 		}
-		port := 10800
-		if cfg.OIDCPort > 0 {
-			port = cfg.OIDCPort
+		port := viper.GetInt("oidc_port")
+		if port == 0 {
+			port = 10800
 		}
 		cmd.PrintErrln("Token expired or missing. Re-authenticating via OIDC...")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
@@ -130,6 +142,7 @@ func autoAuth(cmd *cobra.Command) error {
 			return fmt.Errorf("auto-auth: %w", err)
 		}
 		oidcAccessToken = result.AccessToken
+		cfg, _ := config.Load(cfgFile)
 		if serverURL != "" {
 			cfg.ServerURL = serverURL
 		}

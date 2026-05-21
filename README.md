@@ -107,7 +107,7 @@ Secrets (`api_token`, `password`) are stored in the OS keyring by default. Set `
 | Flag | Env Var | Description |
 |------|---------|-------------|
 | `--config` | — | Config file path (default `~/.outline-cli/config.yaml`) |
-| `--server-url` | `OUTLINE_SERVER_URL` / `OUTLINE_HOST` | Outline server URL |
+| `--server-url` | `OUTLINE_SERVER_URL` | Outline server URL |
 | `--api-token` | `OUTLINE_API_TOKEN` | API token |
 | `--username` | `OUTLINE_USERNAME` | Basic auth username |
 | `--password` | `OUTLINE_PASSWORD` | Basic auth password |
@@ -125,7 +125,7 @@ For CI/CD pipelines, use environment variables — no config file or keyring nee
 
 ```yaml
 env:
-  OUTLINE_HOST: https://outline.example.com
+  OUTLINE_SERVER_URL: https://outline.example.com
   OUTLINE_API_TOKEN: ${{ secrets.OUTLINE_API_TOKEN }}
 ```
 

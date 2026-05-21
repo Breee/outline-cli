@@ -5,18 +5,20 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
+	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
 )
 
 type File struct {
-	ServerURL       string `yaml:"server_url,omitempty"`
-	AuthMethod      string `yaml:"auth_method,omitempty"`
-	TokenStorage    string `yaml:"token_storage,omitempty"`
-	OIDCAccessToken string `yaml:"oidc_access_token,omitempty"`
-	APIToken        string `yaml:"api_token,omitempty"`
-	Password        string `yaml:"password,omitempty"`
-	OIDCPort        int    `yaml:"oidc_port,omitempty"`
+	ServerURL       string `yaml:"server_url,omitempty" mapstructure:"server_url"`
+	AuthMethod      string `yaml:"auth_method,omitempty" mapstructure:"auth_method"`
+	TokenStorage    string `yaml:"token_storage,omitempty" mapstructure:"token_storage"`
+	OIDCAccessToken string `yaml:"oidc_access_token,omitempty" mapstructure:"oidc_access_token"`
+	APIToken        string `yaml:"api_token,omitempty" mapstructure:"api_token"`
+	Password        string `yaml:"password,omitempty" mapstructure:"password"`
+	OIDCPort        int    `yaml:"oidc_port,omitempty" mapstructure:"oidc_port"`
 }
 
 // ValidKeys lists all configurable keys (derived from Registry).
@@ -41,7 +43,31 @@ var SecretKeys = func() map[string]bool {
 	return m
 }()
 
-// Get returns the value of a config key.
+// InitViper sets up Viper with env var bindings from the Registry.
+// Call this once during CLI initialization.
+func InitViper() {
+	viper.SetConfigType("yaml")
+	viper.SetEnvPrefix("")        // No prefix — env vars are explicit in Registry.
+	viper.AutomaticEnv()
+	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+
+	for _, opt := range Registry {
+		if opt.EnvVar != "" {
+			_ = viper.BindEnv(opt.Key, opt.EnvVar)
+		}
+	}
+}
+
+// SetConfigFile tells Viper which file to read.
+func SetConfigFile(path string) {
+	if path == "" {
+		path = DefaultPath()
+	}
+	viper.SetConfigFile(path)
+	_ = viper.ReadInConfig() // Ignore error if file doesn't exist yet.
+}
+
+// Get returns the value of a config key (Viper-resolved: flag > env > file).
 func (f *File) Get(key string) (string, error) {
 	switch key {
 	case "server_url":
@@ -95,9 +121,9 @@ func (f *File) Set(key, value string) error {
 		}
 		f.TokenStorage = value
 	case "api_token":
-		f.APIToken = value // will be routed through keyring in cmd layer
+		f.APIToken = value
 	case "password":
-		f.Password = value // will be routed through keyring in cmd layer
+		f.Password = value
 	default:
 		return fmt.Errorf("unknown config key %q (valid: %v)", key, ValidKeys)
 	}

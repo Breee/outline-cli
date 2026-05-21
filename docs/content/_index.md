@@ -1,7 +1,7 @@
 ---
 title: "outline-cli"
 description: "The best wiki CLI: push, pull, search, and read Outline wiki documents from your terminal."
-llmsDescription: "outline-cli is a Go CLI tool for managing Outline wiki documents. Core commands: `outline push --path ./docs/ --collection-id <id>` to publish markdown files, `outline auth oidc-login` for browser-based OIDC authentication, `outline config set <key> <value>` for configuration. Supports metadata headers (<!-- Collection: ... -->, <!-- Title: ... -->, <!-- Icon: ... -->, <!-- Parent: ... -->), automatic image upload, directory-based parent/child nesting, collection resolution by name/slug/UUID, and OS keyring credential storage. Auth priority: CLI flags > env vars (OUTLINE_API_TOKEN, OUTLINE_HOST) > keyring > config file."
+llmsDescription: "outline-cli is a Go CLI tool for managing Outline wiki documents. Core commands: `outline push --path ./docs/ --collection-id <id>` to publish markdown files, `outline auth oidc-login` for browser-based OIDC authentication, `outline config set <key> <value>` for configuration. Supports metadata headers (<!-- Collection: ... -->, <!-- Title: ... -->, <!-- Icon: ... -->, <!-- Parent: ... -->), automatic image upload, directory-based parent/child nesting, collection resolution by name/slug/UUID, and OS keyring credential storage. Auth priority: CLI flags > env vars (OUTLINE_API_TOKEN, OUTLINE_SERVER_URL) > keyring > config file."
 ---
 
 # outline-cli
@@ -22,7 +22,7 @@ The best wiki CLI: push, pull, search, and read [Outline](https://github.com/out
 curl -sL "https://github.com/Breee/outline-cli/releases/latest/download/outline_linux_amd64.tar.gz" | sudo tar xz -C /usr/local/bin outline
 
 # Authenticate
-export OUTLINE_HOST=https://outline.example.com
+export OUTLINE_SERVER_URL=https://outline.example.com
 export OUTLINE_API_TOKEN=sk-your-token
 
 # Push docs

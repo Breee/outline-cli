@@ -101,7 +101,7 @@ jobs:
 | Push with `--create-collection` | E2E | E2E |
 | Push same file twice (upsert) | E2E | E2E |
 | Push directory with index.md parent | E2E | E2E |
-| OUTLINE_HOST env var resolves | `cmd` | Unit |
+| OUTLINE_SERVER_URL env var resolves | `cmd` | Unit |
 | Keyring fallback to file | `internal/config` | Unit |
 
 ### Golden File Tests
@@ -208,7 +208,7 @@ runs:
     - name: Push docs
       shell: bash
       env:
-        OUTLINE_HOST: ${{ inputs.server-url }}
+        OUTLINE_SERVER_URL: ${{ inputs.server-url }}
         OUTLINE_API_TOKEN: ${{ inputs.api-token }}
       run: |
         outline push \

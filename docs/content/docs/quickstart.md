@@ -2,7 +2,7 @@
 title: "Quick Start"
 weight: 20
 description: "Push your first document to Outline in under 2 minutes."
-llmsDescription: "Quick start for outline-cli: 1) Set OUTLINE_HOST and OUTLINE_API_TOKEN env vars. 2) Run `outline push --collection-id <name-or-uuid> --path ./file.md` to push a single file. 3) Run `outline push --collection-id <name> --path ./docs/` to push a directory tree. Files are upserted by title. Use `--create-collection` flag to auto-create the target collection."
+llmsDescription: "Quick start for outline-cli: 1) Set OUTLINE_SERVER_URL and OUTLINE_API_TOKEN env vars. 2) Run `outline push --collection-id <name-or-uuid> --path ./file.md` to push a single file. 3) Run `outline push --collection-id <name> --path ./docs/` to push a directory tree. Files are upserted by title. Use `--create-collection` flag to auto-create the target collection."
 ---
 
 
@@ -16,7 +16,7 @@ Push your first document to Outline in under 2 minutes.
 ## 1. Configure credentials
 
 ```bash
-export OUTLINE_HOST=https://outline.example.com
+export OUTLINE_SERVER_URL=https://outline.example.com
 export OUTLINE_API_TOKEN=sk-your-api-token
 ```
 

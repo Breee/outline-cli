@@ -73,7 +73,7 @@ For server URL:
 ```
 Priority (highest wins):
 1. --server-url flag
-2. OUTLINE_HOST env var (new alias)
+2. OUTLINE_SERVER_URL env var (new alias)
 3. OUTLINE_SERVER_URL env var
 4. Config file
 ```
@@ -103,7 +103,7 @@ The primary use case for many users is CI/CD. The default resolution order shoul
 ```
 Priority (highest wins):
 1. --api-token / --server-url flags
-2. OUTLINE_API_TOKEN / OUTLINE_HOST env vars
+2. OUTLINE_API_TOKEN / OUTLINE_SERVER_URL env vars
 3. Keyring lookup
 4. Config file (plaintext fallback)
 ```
@@ -112,13 +112,13 @@ This means a CI job only needs:
 
 ```yaml
 env:
-  OUTLINE_HOST: https://outline.example.com
+  OUTLINE_SERVER_URL: https://outline.example.com
   OUTLINE_API_TOKEN: ${{ secrets.OUTLINE_API_TOKEN }}
 ```
 
 No config file, no keyring, no `auth oidc-login` step required.
 
-**Note:** `OUTLINE_HOST` should be added as an alias for `OUTLINE_SERVER_URL` since "host" is the more natural term in CI/CD contexts. Both should be accepted.
+**Note:** `OUTLINE_SERVER_URL` should be added as an alias for `OUTLINE_SERVER_URL` since "host" is the more natural term in CI/CD contexts. Both should be accepted.
 
 ## Security Notes
 
@@ -148,5 +148,5 @@ All implementation steps are complete. Tests are in:
 - [x] Set/Get api_token and password via File struct
 - [x] Unknown key in Get/Set returns error
 - [ ] E2E: `config set api_token` + `push` uses keyring token (manual test with dev env)
-- [ ] E2E: `OUTLINE_HOST` env var resolves correctly (manual test)
+- [ ] E2E: `OUTLINE_SERVER_URL` env var resolves correctly (manual test)
 

@@ -17,7 +17,7 @@ The simplest method. Get a token from **Settings → API** in Outline.
 {{< tab name="Environment Variable" >}}
 ```bash
 export OUTLINE_API_TOKEN=sk-your-token
-export OUTLINE_HOST=https://outline.example.com
+export OUTLINE_SERVER_URL=https://outline.example.com
 outline push --path ./docs/ --collection-id "Engineering"
 ```
 {{< /tab >}}
@@ -63,7 +63,7 @@ After login, all commands work without additional flags.
 ```bash
 export OUTLINE_USERNAME=user@example.com
 export OUTLINE_PASSWORD=secret
-export OUTLINE_HOST=https://outline.example.com
+export OUTLINE_SERVER_URL=https://outline.example.com
 outline push --path ./docs/ --collection-id "Docs"
 ```
 
@@ -72,7 +72,7 @@ outline push --path ./docs/ --collection-id "Docs"
 When multiple credentials are available, this priority applies (highest wins):
 
 1. CLI flags (`--api-token`, `--username`/`--password`, `--oidc-access-token`)
-2. Environment variables (`OUTLINE_API_TOKEN`, `OUTLINE_HOST`)
+2. Environment variables (`OUTLINE_API_TOKEN`, `OUTLINE_SERVER_URL`)
 3. OS keyring (set via `config set` or `auth oidc-login`)
 4. Config file (`~/.outline-cli/config.yaml`)
 

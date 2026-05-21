@@ -168,12 +168,9 @@ func generateEnvVarsMD(dir string) error {
 			key = "`" + opt.Key + "`"
 		}
 		buf.WriteString(fmt.Sprintf("| `%s` | %s | %s |\n", opt.EnvVar, key, opt.Description))
-		if opt.AltEnvVar != "" {
-			buf.WriteString(fmt.Sprintf("| `%s` | %s | %s (alias) |\n", opt.AltEnvVar, key, opt.Description))
-		}
 	}
 	buf.WriteString("\n## Priority\n\n```\nCLI flags > Environment variables > OS keyring > Config file\n```\n\n")
-	buf.WriteString("## CI/CD Minimal Setup\n\nOnly two variables are needed:\n\n```bash\nexport OUTLINE_HOST=https://outline.example.com\nexport OUTLINE_API_TOKEN=sk-your-token\noutline push --collection-id \"Docs\" --path ./docs/\n```\n")
+	buf.WriteString("## CI/CD Minimal Setup\n\nOnly two variables are needed:\n\n```bash\nexport OUTLINE_SERVER_URL=https://outline.example.com\nexport OUTLINE_API_TOKEN=sk-your-token\noutline push --collection-id \"Docs\" --path ./docs/\n```\n")
 	return os.WriteFile(filepath.Join(dir, "env-vars.md"), []byte(buf.String()), 0o644)
 }
 
