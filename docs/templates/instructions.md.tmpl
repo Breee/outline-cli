@@ -23,16 +23,12 @@ make {{printf "%-12s" .Name}} # {{.Comment}}
 - Metadata headers in markdown: `<!-- Collection: X -->`, `<!-- Title: X -->`, `<!-- Parent: X -->`
 - Directory structure maps to document hierarchy (index.md = parent)
 
-## Env Vars
-{{- range .EnvVars}}
-- `{{.}}`
-{{- end}}
+## Configuration
 
-## Config Keys
-
-Valid keys for `outline config set <key> <value>`:
-{{- range .ConfigKeys}}
-- `{{.Name}}`{{if .Secret}} (stored in OS keyring){{end}}
+| Key | Env Var | Secret | Description |
+|-----|---------|--------|-------------|
+{{- range .Options}}
+| `{{.Key}}` | {{if .EnvVar}}`{{.EnvVar}}`{{else}}—{{end}} | {{if .Secret}}yes{{else}}no{{end}} | {{.Description}} |
 {{- end}}
 
 ## Docs Generation

@@ -247,13 +247,12 @@ func generateLLMInstructions() error {
 
 func buildInstructionContent() string {
 	data := instructionData{
-		Targets:    readMakefileTargets(),
-		Packages:   discoverPackages(),
-		EnvVars:    discoverEnvVars(),
-		ConfigKeys: buildConfigKeys(),
+		Targets:  readMakefileTargets(),
+		Packages: discoverPackages(),
+		Options:  config.Registry,
 	}
 
-	tmplPath := filepath.Join(docsDir, "templates", "instructions.md.tmpl")
+	tmplPath := filepath.Join(filepath.Dir(docsDir), "templates", "instructions.md.tmpl")
 	tmplContent, err := os.ReadFile(tmplPath)
 	if err != nil {
 		return fmt.Sprintf("# outline-cli\n\nError reading template %s: %v\n", tmplPath, err)
@@ -268,23 +267,9 @@ func buildInstructionContent() string {
 }
 
 type instructionData struct {
-	Targets    []makeTarget
-	Packages   []string
-	EnvVars    []string
-	ConfigKeys []configKey
-}
-
-type configKey struct {
-	Name   string
-	Secret bool
-}
-
-func buildConfigKeys() []configKey {
-	var keys []configKey
-	for _, k := range config.ValidKeys {
-		keys = append(keys, configKey{Name: k, Secret: config.SecretKeys[k]})
-	}
-	return keys
+	Targets  []makeTarget
+	Packages []string
+	Options  []config.Option
 }
 
 type makeTarget struct {
@@ -375,42 +360,4 @@ func discoverPackages() []string {
 	return pkgs
 }
 
-func discoverEnvVars() []string {
-	var envs []string
-	seen := make(map[string]bool)
 
-	// Read from source to get actual env var names
-	content, err := os.ReadFile("cmd/root.go")
-	if err != nil {
-		return envs
-	}
-
-	for _, line := range strings.Split(string(content), "\n") {
-		for _, match := range extractQuotedStrings(line) {
-			if strings.HasPrefix(match, "OUTLINE_") && !seen[match] {
-				seen[match] = true
-				envs = append(envs, match)
-			}
-		}
-	}
-
-	return envs
-}
-
-func extractQuotedStrings(line string) []string {
-	var results []string
-	for {
-		idx := strings.Index(line, "\"")
-		if idx < 0 {
-			break
-		}
-		line = line[idx+1:]
-		end := strings.Index(line, "\"")
-		if end < 0 {
-			break
-		}
-		results = append(results, line[:end])
-		line = line[end+1:]
-	}
-	return results
-}

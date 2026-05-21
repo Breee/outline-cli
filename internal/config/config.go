@@ -19,11 +19,25 @@ type File struct {
 	OIDCPort        int    `yaml:"oidc_port,omitempty"`
 }
 
-// ValidKeys lists all configurable keys.
-var ValidKeys = []string{"server_url", "auth_method", "token_storage", "oidc_port", "api_token", "password"}
+// ValidKeys lists all configurable keys (derived from Registry).
+var ValidKeys = func() []string {
+	keys := make([]string, len(Registry))
+	for i, opt := range Registry {
+		keys[i] = opt.Key
+	}
+	return keys
+}()
 
-// SecretKeys are keys that are stored in the keyring.
-var SecretKeys = map[string]bool{"api_token": true, "password": true}
+// SecretKeys are keys that are stored in the keyring (derived from Registry).
+var SecretKeys = func() map[string]bool {
+	m := make(map[string]bool)
+	for _, opt := range Registry {
+		if opt.Secret {
+			m[opt.Key] = true
+		}
+	}
+	return m
+}()
 
 // Get returns the value of a config key.
 func (f *File) Get(key string) (string, error) {
