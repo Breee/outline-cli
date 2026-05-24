@@ -18,7 +18,11 @@ vet:
 	go vet ./...
 
 e2e:
-	docker compose -f test/e2e/docker-compose.yml up --abort-on-container-exit --exit-code-from e2e
+	docker compose -f test/e2e/docker-compose.yml up -d postgres redis dex outline
+	@echo "Waiting for Outline to be healthy..."
+	@docker compose -f test/e2e/docker-compose.yml exec -T outline sh -c 'for i in $$(seq 1 60); do wget -q --spider http://localhost:3000 && exit 0; sleep 2; done; exit 1'
+	docker compose -f test/e2e/docker-compose.yml up --abort-on-container-exit --exit-code-from e2e e2e
+	docker compose -f test/e2e/docker-compose.yml down -v
 
 completions:
 	mkdir -p completions

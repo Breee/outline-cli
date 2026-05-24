@@ -1,19 +1,60 @@
 services:
-  outline-mock:
-    image: golang:1.25-alpine
-    working_dir: /workspace
-    command: ["sh", "-c", "go run ./test/e2e/mock/main.go"]
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: outline
+      POSTGRES_PASSWORD: outline
+      POSTGRES_DB: outline
+    healthcheck:
+      test: ["CMD", "pg_isready", "-d", "outline", "-U", "outline"]
+      interval: 2s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 5s
+      retries: 20
+
+  dex:
+    image: dexidp/dex:v2.41.1
+    command: ["dex", "serve", "/etc/dex/config.yaml"]
     volumes:
-      - ../../:/workspace
+      - ./dex.yml:/etc/dex/config.yaml:ro
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:5556/dex/.well-known/openid-configuration"]
+      interval: 2s
+      timeout: 5s
+      retries: 20
+
+  outline:
+    image: docker.getoutline.com/outlinewiki/outline:latest
+    env_file: ./e2e.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      dex:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
 
   e2e:
     image: golang:1.25-alpine
     depends_on:
-      - outline-mock
+      outline:
+        condition: service_healthy
     working_dir: /workspace
     environment:
-      OUTLINE_SERVER_URL: http://outline-mock:8080
-      OUTLINE_API_TOKEN: e2e-token
-    command: ["sh", "-c", "go test ./test/e2e -v"]
+      OUTLINE_SERVER_URL: http://outline:3000
+      DEX_URL: http://dex:5556
+    command: ["sh", "-c", "go test -v -count=1 -timeout=120s ./test/e2e/"]
     volumes:
       - ../../:/workspace
