@@ -3,6 +3,7 @@ package e2e
 import (
 	"encoding/json"
 	"fmt"
+	"html"
 	"io"
 	"net/http"
 	"net/http/cookiejar"
@@ -129,39 +130,79 @@ func bootstrapAPIToken(baseURL string) (string, error) {
 		return "", fmt.Errorf("auth.info returned ok=false after login")
 	}
 
+	// Get the CSRF token from the "csrfToken" cookie set by Outline on GET requests.
+	// Outline uses the double-submit cookie pattern: the cookie value must also be
+	// sent in the "x-csrf-token" header on mutating requests.
+	csrfToken := readCSRFCookie(jar, baseURL)
+	if csrfToken == "" {
+		// Make a GET request to trigger Outline's attachCSRFToken middleware.
+		getResp, getErr := client.Get(baseURL)
+		if getErr == nil {
+			io.Copy(io.Discard, getResp.Body)
+			getResp.Body.Close()
+			csrfToken = readCSRFCookie(jar, baseURL)
+		}
+	}
+	fmt.Fprintf(os.Stderr, "CSRF token found: %v\n", csrfToken != "")
+
 	// Step 3: Create an API key using the session.
 	req, _ = http.NewRequest("POST", baseURL+"/api/apiKeys.create", strings.NewReader(`{"name":"e2e-test"}`))
 	req.Header.Set("Content-Type", "application/json")
+	if csrfToken != "" {
+		req.Header.Set("x-csrf-token", csrfToken)
+	}
 	resp, err = client.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("creating API key: %w", err)
 	}
 	defer resp.Body.Close()
 
+	body, _ = io.ReadAll(resp.Body)
+
 	var keyResp struct {
-		OK   bool `json:"ok"`
-		Data struct {
-			Secret string `json:"secret"`
+		OK    bool   `json:"ok"`
+		Error string `json:"error"`
+		Data  struct {
+			Value string `json:"value"`
 		} `json:"data"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&keyResp); err != nil {
+	if err := json.Unmarshal(body, &keyResp); err != nil {
 		return "", fmt.Errorf("decoding apiKeys.create: %w", err)
 	}
 	if !keyResp.OK {
-		return "", fmt.Errorf("apiKeys.create returned ok=false")
+		return "", fmt.Errorf("apiKeys.create returned ok=false (status %d, error: %s)", resp.StatusCode, keyResp.Error)
+	}
+	if keyResp.Data.Value == "" {
+		return "", fmt.Errorf("apiKeys.create returned empty value (status %d, body: %s)", resp.StatusCode, string(body[:min(len(body), 500)]))
 	}
 
-	return keyResp.Data.Secret, nil
+	return keyResp.Data.Value, nil
+}
+
+// readCSRFCookie returns the value of the "csrfToken" cookie from the jar for
+// the given base URL. Outline's CSRF uses a double-submit cookie pattern where
+// the cookie value must also be echoed in the "x-csrf-token" request header.
+func readCSRFCookie(jar http.CookieJar, baseURL string) string {
+	parsed, err := url.Parse(baseURL)
+	if err != nil {
+		return ""
+	}
+	for _, c := range jar.Cookies(parsed) {
+		if c.Name == "csrfToken" {
+			return c.Value
+		}
+	}
+	return ""
 }
 
 // extractFormAction finds the action attribute of the first <form> in HTML.
-func extractFormAction(html string, baseURL *url.URL) string {
+func extractFormAction(htmlBody string, baseURL *url.URL) string {
 	// Simple extraction — find action="..." in form tag.
-	idx := strings.Index(html, "<form")
+	idx := strings.Index(htmlBody, "<form")
 	if idx == -1 {
 		return ""
 	}
-	formTag := html[idx:]
+	formTag := htmlBody[idx:]
 	end := strings.Index(formTag, ">")
 	if end == -1 {
 		return ""
@@ -178,6 +219,7 @@ func extractFormAction(html string, baseURL *url.URL) string {
 		return ""
 	}
 	action := formTag[actionIdx : actionIdx+actionEnd]
+	action = html.UnescapeString(action)
 
 	// Resolve relative URL.
 	parsed, err := url.Parse(action)
@@ -185,6 +227,19 @@ func extractFormAction(html string, baseURL *url.URL) string {
 		return ""
 	}
 	return baseURL.ResolveReference(parsed).String()
+}
+
+func TestExtractFormActionUnescapesHTML(t *testing.T) {
+	baseURL, err := url.Parse("http://dex:5556/dex/auth/local/login?back=&state=abc")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	got := extractFormAction(`<form action="/dex/auth/local/login?back=&amp;state=is4ydxmpqi2dm7uysxlmjjk7c" method="post">`, baseURL)
+	want := "http://dex:5556/dex/auth/local/login?back=&state=is4ydxmpqi2dm7uysxlmjjk7c"
+	if got != want {
+		t.Fatalf("expected %q, got %q", want, got)
+	}
 }
 
 func runCLI(t *testing.T, args ...string) (string, error) {
