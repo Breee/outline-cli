@@ -3,6 +3,7 @@ package e2e
 import (
 	"encoding/json"
 	"fmt"
+	"html"
 	"io"
 	"net/http"
 	"net/http/cookiejar"
@@ -155,13 +156,13 @@ func bootstrapAPIToken(baseURL string) (string, error) {
 }
 
 // extractFormAction finds the action attribute of the first <form> in HTML.
-func extractFormAction(html string, baseURL *url.URL) string {
+func extractFormAction(htmlBody string, baseURL *url.URL) string {
 	// Simple extraction — find action="..." in form tag.
-	idx := strings.Index(html, "<form")
+	idx := strings.Index(htmlBody, "<form")
 	if idx == -1 {
 		return ""
 	}
-	formTag := html[idx:]
+	formTag := htmlBody[idx:]
 	end := strings.Index(formTag, ">")
 	if end == -1 {
 		return ""
@@ -178,6 +179,7 @@ func extractFormAction(html string, baseURL *url.URL) string {
 		return ""
 	}
 	action := formTag[actionIdx : actionIdx+actionEnd]
+	action = html.UnescapeString(action)
 
 	// Resolve relative URL.
 	parsed, err := url.Parse(action)
@@ -185,6 +187,19 @@ func extractFormAction(html string, baseURL *url.URL) string {
 		return ""
 	}
 	return baseURL.ResolveReference(parsed).String()
+}
+
+func TestExtractFormActionUnescapesHTML(t *testing.T) {
+	baseURL, err := url.Parse("http://dex:5556/dex/auth/local/login?back=&state=abc")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	got := extractFormAction(`<form action="/dex/auth/local/login?back=&amp;state=is4ydxmpqi2dm7uysxlmjjk7c" method="post">`, baseURL)
+	want := "http://dex:5556/dex/auth/local/login?back=&state=is4ydxmpqi2dm7uysxlmjjk7c"
+	if got != want {
+		t.Fatalf("expected %q, got %q", want, got)
+	}
 }
 
 func runCLI(t *testing.T, args ...string) (string, error) {
