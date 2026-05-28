@@ -102,18 +102,6 @@ func bootstrapAPIToken(baseURL string) (string, error) {
 	}
 
 	// After following redirects, we should be back at Outline with a session cookie.
-	csrfToken := extractMetaContent(string(body), "csrf-token")
-	if csrfToken == "" {
-		if parsedBaseURL, err := url.Parse(baseURL); err == nil {
-			for _, c := range jar.Cookies(parsedBaseURL) {
-				if c.Name == "csrf" || c.Name == "_csrf" {
-					csrfToken = c.Value
-					break
-				}
-			}
-		}
-	}
-
 	// Verify we have a valid session.
 	req, _ := http.NewRequest("POST", baseURL+"/api/auth.info", strings.NewReader("{}"))
 	req.Header.Set("Content-Type", "application/json")
@@ -142,14 +130,26 @@ func bootstrapAPIToken(baseURL string) (string, error) {
 		return "", fmt.Errorf("auth.info returned ok=false after login")
 	}
 
+	// Get the CSRF token from the "csrfToken" cookie set by Outline on GET requests.
+	// Outline uses the double-submit cookie pattern: the cookie value must also be
+	// sent in the "x-csrf-token" header on mutating requests.
+	csrfToken := readCSRFCookie(jar, baseURL)
+	if csrfToken == "" {
+		// Make a GET request to trigger Outline's attachCSRFToken middleware.
+		getResp, getErr := client.Get(baseURL)
+		if getErr == nil {
+			io.Copy(io.Discard, getResp.Body)
+			getResp.Body.Close()
+			csrfToken = readCSRFCookie(jar, baseURL)
+		}
+	}
+	fmt.Fprintf(os.Stderr, "CSRF token found: %v\n", csrfToken != "")
+
 	// Step 3: Create an API key using the session.
 	req, _ = http.NewRequest("POST", baseURL+"/api/apiKeys.create", strings.NewReader(`{"name":"e2e-test"}`))
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Origin", baseURL)
-	req.Header.Set("Referer", baseURL+"/")
-	req.Header.Set("X-Requested-With", "XMLHttpRequest")
 	if csrfToken != "" {
-		req.Header.Set("X-CSRF-Token", csrfToken)
+		req.Header.Set("x-csrf-token", csrfToken)
 	}
 	resp, err = client.Do(req)
 	if err != nil {
@@ -174,6 +174,22 @@ func bootstrapAPIToken(baseURL string) (string, error) {
 	}
 
 	return keyResp.Data.Secret, nil
+}
+
+// readCSRFCookie returns the value of the "csrfToken" cookie from the jar for
+// the given base URL. Outline's CSRF uses a double-submit cookie pattern where
+// the cookie value must also be echoed in the "x-csrf-token" request header.
+func readCSRFCookie(jar http.CookieJar, baseURL string) string {
+	parsed, err := url.Parse(baseURL)
+	if err != nil {
+		return ""
+	}
+	for _, c := range jar.Cookies(parsed) {
+		if c.Name == "csrfToken" {
+			return c.Value
+		}
+	}
+	return ""
 }
 
 // extractFormAction finds the action attribute of the first <form> in HTML.
