@@ -102,6 +102,18 @@ func bootstrapAPIToken(baseURL string) (string, error) {
 	}
 
 	// After following redirects, we should be back at Outline with a session cookie.
+	csrfToken := extractMetaContent(string(body), "csrf-token")
+	if csrfToken == "" {
+		if parsedBaseURL, err := url.Parse(baseURL); err == nil {
+			for _, c := range jar.Cookies(parsedBaseURL) {
+				if c.Name == "csrf" || c.Name == "_csrf" {
+					csrfToken = c.Value
+					break
+				}
+			}
+		}
+	}
+
 	// Verify we have a valid session.
 	req, _ := http.NewRequest("POST", baseURL+"/api/auth.info", strings.NewReader("{}"))
 	req.Header.Set("Content-Type", "application/json")
@@ -133,23 +145,32 @@ func bootstrapAPIToken(baseURL string) (string, error) {
 	// Step 3: Create an API key using the session.
 	req, _ = http.NewRequest("POST", baseURL+"/api/apiKeys.create", strings.NewReader(`{"name":"e2e-test"}`))
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Origin", baseURL)
+	req.Header.Set("Referer", baseURL+"/")
+	req.Header.Set("X-Requested-With", "XMLHttpRequest")
+	if csrfToken != "" {
+		req.Header.Set("X-CSRF-Token", csrfToken)
+	}
 	resp, err = client.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("creating API key: %w", err)
 	}
 	defer resp.Body.Close()
 
+	body, _ = io.ReadAll(resp.Body)
+
 	var keyResp struct {
-		OK   bool `json:"ok"`
-		Data struct {
+		OK    bool   `json:"ok"`
+		Error string `json:"error"`
+		Data  struct {
 			Secret string `json:"secret"`
 		} `json:"data"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&keyResp); err != nil {
+	if err := json.Unmarshal(body, &keyResp); err != nil {
 		return "", fmt.Errorf("decoding apiKeys.create: %w", err)
 	}
 	if !keyResp.OK {
-		return "", fmt.Errorf("apiKeys.create returned ok=false")
+		return "", fmt.Errorf("apiKeys.create returned ok=false (status %d, error: %s)", resp.StatusCode, keyResp.Error)
 	}
 
 	return keyResp.Data.Secret, nil
@@ -189,6 +210,47 @@ func extractFormAction(htmlBody string, baseURL *url.URL) string {
 	return baseURL.ResolveReference(parsed).String()
 }
 
+func extractMetaContent(htmlBody, metaName string) string {
+	namePattern := `name="` + metaName + `"`
+	idx := strings.Index(htmlBody, namePattern)
+	if idx == -1 {
+		namePattern = `name='` + metaName + `'`
+		idx = strings.Index(htmlBody, namePattern)
+		if idx == -1 {
+			return ""
+		}
+	}
+
+	tagStart := strings.LastIndex(htmlBody[:idx], "<meta")
+	if tagStart == -1 {
+		return ""
+	}
+	tagEnd := strings.Index(htmlBody[idx:], ">")
+	if tagEnd == -1 {
+		return ""
+	}
+	metaTag := htmlBody[tagStart : idx+tagEnd]
+
+	for _, pattern := range []string{`content="`, `content='`} {
+		contentIdx := strings.Index(metaTag, pattern)
+		if contentIdx == -1 {
+			continue
+		}
+		contentIdx += len(pattern)
+		quote := `"`
+		if strings.HasSuffix(pattern, `'`) {
+			quote = `'`
+		}
+		contentEnd := strings.Index(metaTag[contentIdx:], quote)
+		if contentEnd == -1 {
+			continue
+		}
+		return metaTag[contentIdx : contentIdx+contentEnd]
+	}
+
+	return ""
+}
+
 func TestExtractFormActionUnescapesHTML(t *testing.T) {
 	baseURL, err := url.Parse("http://dex:5556/dex/auth/local/login?back=&state=abc")
 	if err != nil {
@@ -199,6 +261,13 @@ func TestExtractFormActionUnescapesHTML(t *testing.T) {
 	want := "http://dex:5556/dex/auth/local/login?back=&state=is4ydxmpqi2dm7uysxlmjjk7c"
 	if got != want {
 		t.Fatalf("expected %q, got %q", want, got)
+	}
+}
+
+func TestExtractMetaContent(t *testing.T) {
+	got := extractMetaContent(`<head><meta charset="utf-8"><meta name="csrf-token" content="abc123"></head>`, "csrf-token")
+	if got != "abc123" {
+		t.Fatalf("expected csrf token %q, got %q", "abc123", got)
 	}
 }
 
