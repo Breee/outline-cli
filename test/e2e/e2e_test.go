@@ -163,7 +163,7 @@ func bootstrapAPIToken(baseURL string) (string, error) {
 		OK    bool   `json:"ok"`
 		Error string `json:"error"`
 		Data  struct {
-			Secret string `json:"secret"`
+			Value string `json:"value"`
 		} `json:"data"`
 	}
 	if err := json.Unmarshal(body, &keyResp); err != nil {
@@ -172,8 +172,11 @@ func bootstrapAPIToken(baseURL string) (string, error) {
 	if !keyResp.OK {
 		return "", fmt.Errorf("apiKeys.create returned ok=false (status %d, error: %s)", resp.StatusCode, keyResp.Error)
 	}
+	if keyResp.Data.Value == "" {
+		return "", fmt.Errorf("apiKeys.create returned empty value (status %d, body: %s)", resp.StatusCode, string(body[:min(len(body), 500)]))
+	}
 
-	return keyResp.Data.Secret, nil
+	return keyResp.Data.Value, nil
 }
 
 // readCSRFCookie returns the value of the "csrfToken" cookie from the jar for
