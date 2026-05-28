@@ -19,7 +19,7 @@ require (
 	github.com/alecthomas/chroma/v2 v2.24.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/charmbracelet/colorprofile v0.4.3 // indirect
-	github.com/charmbracelet/ultraviolet v0.0.0-20260511121909-c840852527f3 // indirect
+	github.com/charmbracelet/ultraviolet v0.0.0-20260525132238-948f4557a654 // indirect
 	github.com/charmbracelet/x/ansi v0.11.7 // indirect
 	github.com/charmbracelet/x/exp/slice v0.0.0-20260519012233-798e623c8447 // indirect
 	github.com/charmbracelet/x/term v0.2.2 // indirect
