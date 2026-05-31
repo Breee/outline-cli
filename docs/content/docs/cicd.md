@@ -2,7 +2,7 @@
 title: "CI/CD Integration"
 weight: 48
 description: "Automatically publish documentation on every git push using GitHub Actions or GitLab CI."
-llmsDescription: "outline-cli CI/CD integration: use env vars OUTLINE_SERVER_URL and OUTLINE_API_TOKEN (no config file or keyring needed). GitHub Actions can install the release tarball or run in `ghcr.io/breee/outline-cli:latest`. GitLab CI can use the published container image directly and run `outline push`. Example GitHub workflow triggers on push to main with path filter on docs/**. The CLI exits 0 on success, non-zero on failure for CI gate usage."
+llmsDescription: "outline-cli CI/CD integration: use env vars OUTLINE_SERVER_URL and OUTLINE_API_TOKEN (no config file or keyring needed). GitHub Actions can install the release tarball or run in `ghcr.io/breee/outline-cli:v0.0.1`. GitLab CI can use the published container image directly and run `outline push`. Example GitHub workflow triggers on push to main with path filter on docs/**. The CLI exits 0 on success, non-zero on failure for CI gate usage."
 ---
 
 
@@ -52,7 +52,7 @@ jobs:
 
 ```yaml
 publish-docs:
-  image: ghcr.io/breee/outline-cli:latest
+  image: ghcr.io/breee/outline-cli:v0.0.1
   stage: deploy
   only:
     changes:
@@ -89,7 +89,7 @@ docker run --rm \
   -e OUTLINE_API_TOKEN \
   -v "$PWD:/workspace" \
   -w /workspace \
-  ghcr.io/breee/outline-cli:latest \
+  ghcr.io/breee/outline-cli:v0.0.1 \
   push --collection-id "${OUTLINE_COLLECTION}" --path ./docs/ --create-collection
 ```
 
