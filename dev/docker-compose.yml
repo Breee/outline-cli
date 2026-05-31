@@ -25,7 +25,7 @@ services:
       POSTGRES_PASSWORD: outline
       POSTGRES_DB: outline
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql
     networks:
       - default
     healthcheck:
