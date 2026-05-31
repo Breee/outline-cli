@@ -2,7 +2,7 @@
 title: "Installation"
 weight: 10
 description: "Install outline-cli on Linux, macOS, Windows, or from the published container image."
-llmsDescription: "Install outline-cli: download binary from GitHub releases. Linux/macOS: curl tar.gz to /usr/local/bin. Windows: download zip. Container image available at `ghcr.io/breee/outline-cli:v0.0.1`. Also available via `go install github.com/Breee/outline-cli@latest`. Requires no runtime dependencies. Shell completions available for bash, zsh, fish via `outline completion <shell>`."
+llmsDescription: "Install outline-cli: download binary from GitHub releases. Linux/macOS: curl tar.gz to /usr/local/bin. Windows: download zip. Container images are available at `ghcr.io/breee/outline-cli` with both `latest` and versioned release tags. Also available via `go install github.com/Breee/outline-cli@latest`. Requires no runtime dependencies. Shell completions available for bash, zsh, fish via `outline completion <shell>`."
 ---
 
 
@@ -38,8 +38,10 @@ go install github.com/Breee/outline-cli@latest
 Use the published image from GitHub Container Registry:
 
 ```bash
-docker run --rm ghcr.io/breee/outline-cli:v0.0.1 version
+docker run --rm ghcr.io/breee/outline-cli:latest version
 ```
+
+For reproducible environments, replace `latest` with a release tag such as `vX.Y.Z`.
 
 ## Build from Source
 
