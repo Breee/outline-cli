@@ -21,6 +21,12 @@ var (
 	apiToken  string
 )
 
+const (
+	maxOIDCInitRetries = 10
+	oidcRetryBackoff   = 300 * time.Millisecond
+	oidcInternalError  = "internal error"
+)
+
 func TestMain(m *testing.M) {
 	serverURL = os.Getenv("OUTLINE_SERVER_URL")
 	if serverURL == "" {
@@ -65,27 +71,28 @@ func bootstrapAPIToken(baseURL string) (string, error) {
 		body     []byte
 		loginURL string
 	)
-	for attempt := 1; attempt <= 10; attempt++ {
+	for attempt := 1; attempt <= maxOIDCInitRetries; attempt++ {
 		resp, err = client.Get(baseURL + "/auth/oidc")
 		if err != nil {
-			if attempt == 10 {
+			if attempt == maxOIDCInitRetries {
 				return "", fmt.Errorf("initiating OIDC: %w", err)
 			}
-			time.Sleep(time.Duration(attempt) * 300 * time.Millisecond)
+			time.Sleep(calculateBackoffDuration(attempt))
 			continue
 		}
 		body, _ = io.ReadAll(resp.Body)
 		resp.Body.Close()
 
 		fmt.Fprintf(os.Stderr, "OIDC step1: attempt=%d status=%d url=%s bodyLen=%d\n", attempt, resp.StatusCode, resp.Request.URL, len(body))
+		if shouldRetryOIDCInit(resp.StatusCode, body) {
+			if attempt == maxOIDCInitRetries {
+				return "", fmt.Errorf("oidc init remained retryable after %d attempts (status %d, url %s, body: %s)", maxOIDCInitRetries, resp.StatusCode, resp.Request.URL, string(body[:min(len(body), 500)]))
+			}
+			time.Sleep(calculateBackoffDuration(attempt))
+			continue
+		}
 		loginURL = extractFormAction(string(body), resp.Request.URL)
-		if loginURL != "" {
-			break
-		}
-		if !shouldRetryOIDCInit(resp.StatusCode, body) || attempt == 10 {
-			break
-		}
-		time.Sleep(time.Duration(attempt) * 300 * time.Millisecond)
+		break
 	}
 
 	// We should now be at Dex's login page. Extract the action URL from the form.
@@ -201,7 +208,11 @@ func bootstrapAPIToken(baseURL string) (string, error) {
 }
 
 func shouldRetryOIDCInit(status int, body []byte) bool {
-	return status >= http.StatusInternalServerError || bytesContainsCaseInsensitive(body, "internal error")
+	return status >= http.StatusInternalServerError || bytesContainsCaseInsensitive(body, oidcInternalError)
+}
+
+func calculateBackoffDuration(attempt int) time.Duration {
+	return time.Duration(attempt) * oidcRetryBackoff
 }
 
 func bytesContainsCaseInsensitive(body []byte, needle string) bool {
@@ -280,6 +291,7 @@ func TestShouldRetryOIDCInit(t *testing.T) {
 	}{
 		{name: "server error", status: 500, body: `{"ok":false}`, want: true},
 		{name: "internal error body", status: 200, body: `{"message":"Internal error"}`, want: true},
+		{name: "internal error with form", status: 200, body: `<form action="/dex/auth/local/login"></form> Internal error`, want: true},
 		{name: "normal html", status: 200, body: `<form action="/dex/auth/local/login">`, want: false},
 	}
 
