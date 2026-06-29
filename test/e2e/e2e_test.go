@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 var (
@@ -57,17 +58,37 @@ func bootstrapAPIToken(baseURL string) (string, error) {
 	}
 
 	// Step 1: Hit Outline's OIDC auth endpoint to get redirected to Dex.
-	resp, err := client.Get(baseURL + "/auth/oidc")
-	if err != nil {
-		return "", fmt.Errorf("initiating OIDC: %w", err)
-	}
-	body, _ := io.ReadAll(resp.Body)
-	resp.Body.Close()
+	// Outline may briefly return 500 while startup tasks are still finishing.
+	var (
+		err      error
+		resp     *http.Response
+		body     []byte
+		loginURL string
+	)
+	for attempt := 1; attempt <= 10; attempt++ {
+		resp, err = client.Get(baseURL + "/auth/oidc")
+		if err != nil {
+			if attempt == 10 {
+				return "", fmt.Errorf("initiating OIDC: %w", err)
+			}
+			time.Sleep(time.Duration(attempt) * 300 * time.Millisecond)
+			continue
+		}
+		body, _ = io.ReadAll(resp.Body)
+		resp.Body.Close()
 
-	fmt.Fprintf(os.Stderr, "OIDC step1: status=%d url=%s bodyLen=%d\n", resp.StatusCode, resp.Request.URL, len(body))
+		fmt.Fprintf(os.Stderr, "OIDC step1: attempt=%d status=%d url=%s bodyLen=%d\n", attempt, resp.StatusCode, resp.Request.URL, len(body))
+		loginURL = extractFormAction(string(body), resp.Request.URL)
+		if loginURL != "" {
+			break
+		}
+		if !shouldRetryOIDCInit(resp.StatusCode, body) || attempt == 10 {
+			break
+		}
+		time.Sleep(time.Duration(attempt) * 300 * time.Millisecond)
+	}
 
 	// We should now be at Dex's login page. Extract the action URL from the form.
-	loginURL := extractFormAction(string(body), resp.Request.URL)
 	if loginURL == "" {
 		return "", fmt.Errorf("could not find login form action in Dex response (status %d, url %s, body: %s)", resp.StatusCode, resp.Request.URL, string(body[:min(len(body), 500)]))
 	}
@@ -179,6 +200,14 @@ func bootstrapAPIToken(baseURL string) (string, error) {
 	return keyResp.Data.Value, nil
 }
 
+func shouldRetryOIDCInit(status int, body []byte) bool {
+	return status >= http.StatusInternalServerError || bytesContainsCaseInsensitive(body, "internal error")
+}
+
+func bytesContainsCaseInsensitive(body []byte, needle string) bool {
+	return strings.Contains(strings.ToLower(string(body)), strings.ToLower(needle))
+}
+
 // readCSRFCookie returns the value of the "csrfToken" cookie from the jar for
 // the given base URL. Outline's CSRF uses a double-submit cookie pattern where
 // the cookie value must also be echoed in the "x-csrf-token" request header.
@@ -239,6 +268,28 @@ func TestExtractFormActionUnescapesHTML(t *testing.T) {
 	want := "http://dex:5556/dex/auth/local/login?back=&state=is4ydxmpqi2dm7uysxlmjjk7c"
 	if got != want {
 		t.Fatalf("expected %q, got %q", want, got)
+	}
+}
+
+func TestShouldRetryOIDCInit(t *testing.T) {
+	tests := []struct {
+		name   string
+		status int
+		body   string
+		want   bool
+	}{
+		{name: "server error", status: 500, body: `{"ok":false}`, want: true},
+		{name: "internal error body", status: 200, body: `{"message":"Internal error"}`, want: true},
+		{name: "normal html", status: 200, body: `<form action="/dex/auth/local/login">`, want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := shouldRetryOIDCInit(tt.status, []byte(tt.body))
+			if got != tt.want {
+				t.Fatalf("shouldRetryOIDCInit(%d, %q) = %v, want %v", tt.status, tt.body, got, tt.want)
+			}
+		})
 	}
 }
 
