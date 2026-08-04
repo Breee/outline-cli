@@ -20,7 +20,7 @@ services:
       retries: 20
 
   dex:
-    image: dexidp/dex:v2.41.1
+    image: dexidp/dex:v2.45.1
     command: ["dex", "serve", "/etc/dex/config.yaml"]
     volumes:
       - ./dex.yml:/etc/dex/config.yaml:ro
