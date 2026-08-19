@@ -31,7 +31,7 @@ services:
       retries: 20
 
   outline:
-    image: docker.getoutline.com/outlinewiki/outline:latest
+    image: outlinewiki/outline:1.8.1
     env_file: ./e2e.env
     depends_on:
       postgres:
