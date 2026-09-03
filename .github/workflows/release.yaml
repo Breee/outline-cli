@@ -38,7 +38,7 @@ jobs:
 
       - uses: actions/setup-go@v7
         with:
-          go-version: "1.27.0"
+          go-version: "1.27.1"
 
       - run: make test
 
@@ -50,7 +50,7 @@ jobs:
 
       - uses: actions/setup-go@v7
         with:
-          go-version: "1.27.0"
+          go-version: "1.27.1"
 
       - run: make e2e
 
@@ -65,7 +65,7 @@ jobs:
 
       - uses: actions/setup-go@v7
         with:
-          go-version: "1.27.0"
+          go-version: "1.27.1"
 
       - name: Check for relevant changes since last tag
         id: changes
